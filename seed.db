@@ -1,0 +1,351 @@
+-- ============================================================================
+-- Talent Agency Platform - Seed Data
+-- Version: 1.0
+-- ============================================================================
+
+USE `talent_agency_platform`;
+
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+
+-- ============================================================================
+-- USERS (Passwords are all: Password123!)
+-- ============================================================================
+
+INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `status`) VALUES
+(1, 'admin@agency.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'super_admin', 'active'),
+(2, 'staff1@agency.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'staff', 'active'),
+(3, 'staff2@agency.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'staff', 'active'),
+(4, 'john.doe@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(5, 'sarah.wilson@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(6, 'mike.chen@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(7, 'emily.rodriguez@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(8, 'david.kim@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(9, 'lisa.anderson@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(10, 'james.taylor@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(11, 'rachel.brown@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'talent', 'active'),
+(12, 'techcorp@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'employer', 'active'),
+(13, 'creativestudio@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'employer', 'active'),
+(14, 'digitalagency@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'employer', 'active'),
+(15, 'startupinc@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'employer', 'active'),
+(16, 'ecommerce@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'employer', 'active');
+
+-- ============================================================================
+-- TALENTS
+-- ============================================================================
+
+INSERT INTO `talents` (`id`, `user_id`, `full_name`, `phone`, `city`, `country`, `bio`, `availability_status`, `hourly_rate`, `currency`, `preferred_work_type`, `years_experience`, `date_of_birth`, `verified`, `rating_average`, `total_jobs_completed`) VALUES
+(1, 4, 'John Doe', '+62812345678', 'Jakarta', 'Indonesia', 'Full-stack developer with 5+ years experience in web applications. Specialized in PHP, Laravel, React, and Vue.js. Passionate about clean code and modern architecture.', 'available', 150000, 'IDR', 'full-time,freelance', 5, '1993-05-15', TRUE, 4.80, 12),
+(2, 5, 'Sarah Wilson', '+62823456789', 'Bandung', 'Indonesia', 'Creative UI/UX designer with a keen eye for detail. Expert in Figma, Adobe XD, and prototyping tools. 6 years of experience creating user-centered designs.', 'available', 120000, 'IDR', 'freelance,project', 6, '1992-08-22', TRUE, 4.95, 18),
+(3, 6, 'Mike Chen', '+62834567890', 'Surabaya', 'Indonesia', 'DevOps engineer specializing in cloud infrastructure and CI/CD pipelines. AWS certified with experience in Docker, Kubernetes, and Terraform.', 'busy', 180000, 'IDR', 'full-time,part-time', 7, '1990-03-10', TRUE, 4.70, 8),
+(4, 7, 'Emily Rodriguez', '+62845678901', 'Jakarta', 'Indonesia', 'Digital marketing specialist focusing on SEO, SEM, and social media strategies. Proven track record of increasing organic traffic by 200%+ for clients.', 'available', 100000, 'IDR', 'freelance,project', 4, '1995-11-30', TRUE, 4.85, 15),
+(5, 8, 'David Kim', '+62856789012', 'Yogyakarta', 'Indonesia', 'Mobile app developer proficient in React Native and Flutter. Built 20+ apps with millions of downloads. Specializes in cross-platform solutions.', 'available', 160000, 'IDR', 'full-time,freelance', 5, '1994-07-18', TRUE, 4.60, 10),
+(6, 9, 'Lisa Anderson', '+62867890123', 'Bali', 'Indonesia', 'Content writer and copywriter with expertise in B2B and B2C content. SEO-focused writing that converts. Fluent in English and Indonesian.', 'available', 80000, 'IDR', 'freelance,part-time', 3, '1996-12-05', TRUE, 4.90, 22),
+(7, 10, 'James Taylor', '+62878901234', 'Jakarta', 'Indonesia', 'Data scientist with strong background in machine learning and AI. Python expert with experience in TensorFlow and scikit-learn. PhD in Computer Science.', 'unavailable', 200000, 'IDR', 'full-time', 8, '1988-04-25', TRUE, 5.00, 5),
+(8, 11, 'Rachel Brown', '+62889012345', 'Semarang', 'Indonesia', 'Project manager with PMP certification. 7 years managing agile teams and delivering projects on time. Expert in Jira, Asana, and Scrum methodologies.', 'available ', 140000, 'IDR', 'full-time,part-time', 7, '1991-09-14', FALSE, NULL, 0);
+
+-- ============================================================================
+-- SKILLS
+-- ============================================================================
+
+INSERT INTO `skills` (`id`, `name`, `category`) VALUES
+(1, 'PHP', 'Programming'),
+(2, 'Laravel', 'Framework'),
+(3, 'JavaScript', 'Programming'),
+(4, 'React', 'Framework'),
+(5, 'Vue.js', 'Framework'),
+(6, 'Node.js', 'Backend'),
+(7, 'Python', 'Programming'),
+(8, 'Django', 'Framework'),
+(9, 'MySQL', 'Database'),
+(10, 'PostgreSQL', 'Database'),
+(11, 'MongoDB', 'Database'),
+(12, 'HTML/CSS', 'Frontend'),
+(13, 'Tailwind CSS', 'Framework'),
+(14, 'Bootstrap', 'Framework'),
+(15, 'UI/UX Design', 'Design'),
+(16, 'Figma', 'Design'),
+(17, 'Adobe XD', 'Design'),
+(18, 'Photoshop', 'Design'),
+(19, 'Illustrator', 'Design'),
+(20, 'AWS', 'Cloud'),
+(21, 'Docker', 'DevOps'),
+(22, 'Kubernetes', 'DevOps'),
+(23, 'CI/CD', 'DevOps'),
+(24, 'Git', 'Tools'),
+(25, 'SEO', 'Marketing'),
+(26, 'Google Analytics', 'Marketing'),
+(27, 'Content Writing', 'Marketing'),
+(28, 'Social Media Marketing', 'Marketing'),
+(29, 'React Native', 'Mobile'),
+(30, 'Flutter', 'Mobile'),
+(31, 'Machine Learning', 'AI'),
+(32, 'TensorFlow', 'AI'),
+(33, 'Data Analysis', 'Data Science'),
+(34, 'Project Management', 'Management'),
+(35, 'Agile/Scrum', 'Management'),
+(36, 'Excel', 'Tools'),
+(37, 'WordPress', 'CMS'),
+(38, 'Shopify', 'E-commerce'),
+(39, 'REST API', 'Backend'),
+(40, 'GraphQL', 'Backend');
+
+-- ============================================================================
+-- TALENT SKILLS
+-- ============================================================================
+
+INSERT INTO `talent_skills` (`talent_id`, `skill_id`, `proficiency_level`) VALUES
+-- John Doe (Full-stack)
+(1, 1, 'expert'), (1, 2, 'expert'), (1, 3, 'expert'), (1, 4, 'advanced'), (1, 5, 'advanced'),
+(1, 9, 'expert'), (1, 12, 'expert'), (1, 24, 'expert'), (1, 39, 'advanced'),
+-- Sarah Wilson (UI/UX)
+(2, 15, 'expert'), (2, 16, 'expert'), (2, 17, 'expert'), (2, 18, 'advanced'), (2, 19, 'advanced'),
+(2, 12, 'expert'), (2, 13, 'advanced'), (2, 14, 'advanced'),
+-- Mike Chen (DevOps)
+(3, 20, 'expert'), (3, 21, 'expert'), (3, 22, 'advanced'), (3, 23, 'expert'), (3, 24, 'expert'),
+(3, 6, 'advanced'), (3, 7, 'advanced'), (3, 9, 'advanced'),
+-- Emily Rodriguez (Marketing)
+(4, 25, 'expert'), (4, 26, 'expert'), (4, 27, 'expert'), (4, 28, 'expert'),
+(4, 37, 'advanced'), (4, 36, 'intermediate'),
+-- David Kim (Mobile)
+(5, 29, 'expert'), (5, 30, 'expert'), (5, 3, 'expert'), (5, 4, 'advanced'),
+(5, 24, 'expert'), (5, 39, 'advanced'),
+-- Lisa Anderson (Content)
+(6, 27, 'expert'), (6, 25, 'advanced'), (6, 28, 'advanced'), (6, 37, 'intermediate'),
+-- James Taylor (Data Science)
+(7, 7, 'expert'), (7, 31, 'expert'), (7, 32, 'expert'), (7, 33, 'expert'),
+(7, 10, 'advanced'), (7, 11, 'advanced'),
+-- Rachel Brown (PM)
+(8, 34, 'expert'), (8, 35, 'expert'), (8, 36, 'expert'), (8, 24, 'advanced');
+
+-- ============================================================================
+-- EMPLOYERS
+-- ============================================================================
+
+INSERT INTO `employers` (`id`, `user_id`, `company_name`, `industry`, `company_size`, `website`, `description`, `address`, `phone`, `verified`, `rating_average`) VALUES
+(1, 12, 'TechCorp Indonesia', 'Technology', '201-500', 'https://techcorp.id', 'Leading software development company providing enterprise solutions across Southeast Asia. We build scalable applications for Fortune 500 companies.', 'Jl. Sudirman No. 123, Jakarta Pusat', '+622112345678', TRUE, 4.50),
+(2, 13, 'Creative Studio Bali', 'Design', '11-50', 'https://creativestudio.bali', 'Award-winning design agency specializing in branding, web design, and digital experiences. We work with startups and established brands.', 'Jl. Raya Seminyak No. 45, Bali', '+62361234567', TRUE, 4.80),
+(3, 14, 'Digital Marketing Pro', 'Marketing', '51-200', 'https://digitalmarketingpro.com', 'Full-service digital marketing agency. We help businesses grow through SEO, PPC, social media, and content marketing strategies.', 'Jl. Gatot Subroto No. 78, Jakarta Selatan', '+622187654321', TRUE, 4.60),
+(4, 15, 'StartupHub Indonesia', 'Technology', '1-10', 'https://startuphub.id', 'Fast-growing tech startup building innovative SaaS products. We are looking for talented individuals to join our remote-first team.', 'Jl. Asia Afrika No. 56, Bandung', '+62221234567', TRUE, 4.70),
+(5, 16, 'E-Commerce Giant', 'E-commerce', '500+', 'https://ecommercegiant.co.id', 'Indonesia largest e-commerce platform. We are expanding our technology team to handle millions of transactions daily.', 'Jl. TB Simatupang No. 99, Jakarta Selatan', '+622198765432', TRUE, 4.40);
+
+-- ============================================================================
+-- JOBS
+-- ============================================================================
+
+INSERT INTO `jobs` (`id`, `employer_id`, `title`, `description`, `job_type`, `location_type`, `location_address`, `salary_min`, `salary_max`, `salary_type`, `currency`, `experience_required`, `status`, `deadline`) VALUES
+(1, 1, 'Senior Full Stack Developer', 'We are looking for an experienced Full Stack Developer to join our engineering team. You will work on building scalable web applications using modern technologies.\n\nResponsibilities:\n- Develop and maintain web applications\n- Write clean, maintainable code\n- Collaborate with cross-functional teams\n- Participate in code reviews\n\nRequirements:\n- 5+ years of experience\n- Strong knowledge of PHP/Laravel and React\n- Experience with MySQL and REST APIs\n- Excellent problem-solving skills', 'full-time', 'hybrid', 'Jakarta Pusat', 15000000, 25000000, 'monthly', 'IDR', 5, 'active', '2026-02-28'),
+
+(2, 2, 'UI/UX Designer', 'Join our creative team as a UI/UX Designer. You will be responsible for creating beautiful and intuitive user interfaces for web and mobile applications.\n\nResponsibilities:\n- Design user interfaces and experiences\n- Create wireframes and prototypes\n- Conduct user research\n- Work closely with developers\n\nRequirements:\n- 3+ years of experience\n- Proficiency in Figma and Adobe XD\n- Strong portfolio\n- Understanding of design principles', 'freelance', 'remote', NULL, 10000000, 18000000, 'project', 'IDR', 3, 'active', '2026-02-15'),
+
+(3, 3, 'Digital Marketing Specialist', 'We need a results-driven Digital Marketing Specialist to manage our clients campaigns and drive online growth.\n\nResponsibilities:\n- Develop and execute marketing strategies\n- Manage SEO and SEM campaigns\n- Create engaging content\n- Analyze campaign performance\n\nRequirements:\n- 4+ years of experience\n- Proven track record in SEO/SEM\n- Google Analytics certification\n- Excellent communication skills', 'full-time', 'onsite', 'Jakarta Selatan', 8000000, 15000000, 'monthly', 'IDR', 4, 'active', '2026-03-01'),
+
+(4, 4, 'React Native Developer', 'Startup looking for a talented React Native Developer to build our mobile app from scratch. Great opportunity to work with cutting-edge technology.\n\nResponsibilities:\n- Build cross-platform mobile applications\n- Implement new features\n- Optimize app performance\n- Work in agile environment\n\nRequirements:\n- 3+ years with React Native\n- Experience with Redux\n- Published apps on App Store/Play Store\n- Strong JavaScript skills', 'contract', 'remote', NULL, 12000000, 20000000, 'monthly', 'IDR', 3, 'active', '2026-02-20'),
+
+(5, 1, 'DevOps Engineer', 'TechCorp is seeking a DevOps Engineer to manage our cloud infrastructure and CI/CD pipelines.\n\nResponsibilities:\n- Manage AWS infrastructure\n- Implement CI/CD pipelines\n- Monitor system performance\n- Automate deployment processes\n\nRequirements:\n- 5+ years in DevOps\n- AWS certification preferred\n- Experience with Docker and Kubernetes\n- Strong scripting skills', 'full-time', 'hybrid', 'Jakarta Pusat', 18000000, 28000000, 'monthly', 'IDR', 5, 'active', '2026-03-15'),
+
+(6, 2, 'Content Writer', 'Looking for a creative Content Writer to produce engaging content for our clients websites and social media.\n\nResponsibilities:\n- Write blog posts and articles\n- Create social media content\n- Research industry trends\n- Edit and proofread content\n\nRequirements:\n- 2+ years of experience\n- Excellent writing skills in English and Indonesian\n- SEO knowledge\n- Portfolio required', 'part-time', 'remote', NULL, 60000, 100000, 'hourly', 'IDR', 2, 'active', '2026-02-25'),
+
+(7, 5, 'Data Scientist', 'Join our data team to build machine learning models that power our recommendation engine.\n\nResponsibilities:\n- Develop ML models\n- Analyze large datasets\n- Create data visualizations\n- Collaborate with engineering team\n\nRequirements:\n- Masters degree in related field\n- 5+ years of experience\n- Python and TensorFlow expertise\n- Strong statistical knowledge', 'full-time', 'hybrid', 'Jakarta Selatan', 20000000, 35000000, 'monthly', 'IDR', 5, 'pending_approval', '2026-03-10'),
+
+(8, 3, 'Social Media Manager', 'We need a Social Media Manager to handle multiple client accounts and grow their online presence.\n\nResponsibilities:\n- Manage social media accounts\n- Create content calendars\n- Engage with audiences\n- Track and report metrics\n\nRequirements:\n- 3+ years of experience\n- Experience with all major platforms\n- Creative mindset\n- Analytics skills', 'full-time', 'onsite', 'Jakarta Selatan', 7000000, 12000000, 'monthly', 'IDR', 3, 'filled', '2026-01-31'),
+
+(9, 4, 'Backend Developer (Node.js)', 'Looking for a Backend Developer to build scalable APIs for our growing platform.\n\nResponsibilities:\n- Design and build RESTful APIs\n- Optimize database queries\n- Write unit tests\n- Deploy to cloud infrastructure\n\nRequirements:\n- 4+ years with Node.js\n- Experience with Express/NestJS\n- MongoDB or PostgreSQL knowledge\n- Understanding of microservices', 'full-time', 'remote', NULL, 12000000, 22000000, 'monthly', 'IDR', 4, 'active', '2026-03-05'),
+
+(10, 5, 'Frontend Developer (React)', 'E-Commerce Giant is hiring Frontend Developers to work on our customer-facing applications.\n\nResponsibilities:\n- Build responsive web interfaces\n- Implement designs pixel-perfect\n- Optimize performance\n- Write reusable components\n\nRequirements:\n- 3+ years with React\n- Experience with Redux/Context API\n- CSS expertise (Tailwind/SASS)\n- Attention to detail', 'full-time', 'hybrid', 'Jakarta Selatan', 10000000, 18000000, 'monthly', 'IDR', 3, 'active', '2026-02-28');
+
+-- ============================================================================
+-- JOB SKILLS
+-- ============================================================================
+
+INSERT INTO `job_skills` (`job_id`, `skill_id`, `required`) VALUES
+-- Job 1: Senior Full Stack Developer
+(1, 1, TRUE), (1, 2, TRUE), (1, 3, TRUE), (1, 4, TRUE), (1, 9, TRUE), (1, 24, TRUE), (1, 39, TRUE),
+-- Job 2: UI/UX Designer
+(2, 15, TRUE), (2, 16, TRUE), (2, 17, TRUE), (2, 18, FALSE), (2, 12, TRUE),
+-- Job 3: Digital Marketing Specialist
+(3, 25, TRUE), (3, 26, TRUE), (3, 27, TRUE), (3, 28, TRUE),
+-- Job 4: React Native Developer
+(4, 29, TRUE), (4, 3, TRUE), (4, 4, TRUE), (4, 24, TRUE),
+-- Job 5: DevOps Engineer
+(5, 20, TRUE), (5, 21, TRUE), (5, 22, TRUE), (5, 23, TRUE), (5, 24, TRUE),
+-- Job 6: Content Writer
+(6, 27, TRUE), (6, 25, TRUE), (6, 37, FALSE),
+-- Job 7: Data Scientist
+(7, 7, TRUE), (7, 31, TRUE), (7, 32, TRUE), (7, 33, TRUE),
+-- Job 8: Social Media Manager
+(8, 28, TRUE), (8, 26, TRUE), (8, 27, FALSE),
+-- Job 9: Backend Developer
+(9, 6, TRUE), (9, 3, TRUE), (9, 11, TRUE), (9, 39, TRUE), (9, 24, TRUE),
+-- Job 10: Frontend Developer
+(10, 3, TRUE), (10, 4, TRUE), (10, 12, TRUE), (10, 13, TRUE), (10, 24, TRUE);
+
+-- ============================================================================
+-- APPLICATIONS
+-- ============================================================================
+
+INSERT INTO `applications` (`id`, `job_id`, `talent_id`, `cover_letter`, `proposed_rate`, `status`, `agency_recommended`, `applied_at`, `reviewed_at`) VALUES
+(1, 1, 1, 'I am very interested in the Senior Full Stack Developer position. With 5 years of experience building web applications using PHP/Laravel and React, I believe I am a perfect fit. I have delivered multiple enterprise-level projects and am passionate about clean code.', 20000000, 'accepted', FALSE, '2026-01-10 09:30:00', '2026-01-12 14:20:00'),
+
+(2, 2, 2, 'Hello! I would love to work on your UI/UX projects. I have 6 years of experience and a strong portfolio. I specialize in creating user-centered designs using Figma and have worked with many international clients.', 15000000, 'shortlisted', TRUE, '2026-01-08 10:15:00', '2026-01-09 16:00:00'),
+
+(3, 3, 4, 'As a Digital Marketing Specialist with 4 years of proven experience, I have successfully increased organic traffic by over 200% for my previous clients. I am confident I can deliver excellent results for your agency.', NULL, 'reviewed', FALSE, '2026-01-12 11:45:00', '2026-01-15 09:30:00'),
+
+(4, 4, 5, 'I have extensive experience building cross-platform mobile apps with React Native. I have published over 20 apps and am excited about the opportunity to work with your startup.', 18000000, 'accepted', FALSE, '2026-01-11 14:20:00', '2026-01-13 10:15:00'),
+
+(5, 5, 3, 'With 7 years of DevOps experience and AWS certification, I am well-equipped to manage your cloud infrastructure. I have implemented CI/CD pipelines for multiple enterprises.', 25000000, 'pending', TRUE, '2026-01-15 08:30:00', NULL),
+
+(6, 6, 6, 'I am a professional content writer with 3 years of experience. I can create engaging, SEO-optimized content in both English and Indonesian. Please check my portfolio for samples.', 80000, 'accepted', FALSE, '2026-01-09 15:00:00', '2026-01-10 11:30:00'),
+
+(7, 1, 5, 'Although my primary expertise is mobile development, I also have strong full-stack skills and would love to transition to web development full-time.', 18000000, 'rejected', FALSE, '2026-01-13 09:00:00', '2026-01-14 13:45:00'),
+
+(8, 2, 4, 'While my main focus is marketing, I have a strong interest in design and would be willing to learn UI/UX design tools for this project.', 12000000, 'rejected', FALSE, '2026-01-14 16:30:00', '2026-01-16 10:00:00'),
+
+(9, 8, 4, 'I am the perfect fit for the Social Media Manager role. I have managed accounts for 10+ brands and consistently delivered engagement growth.', NULL, 'accepted', TRUE, '2025-12-28 10:00:00', '2026-01-02 14:00:00'),
+
+(10, 9, 1, 'I have 2 years of experience with Node.js in addition to my PHP expertise. I am eager to work on building scalable backend systems for your platform.', 19000000, 'shortlisted', FALSE, '2026-01-16 11:20:00', '2026-01-18 15:30:00'),
+
+(11, 10, 5, 'As a React Native developer, I have strong React skills and would be excited to work on your e-commerce frontend.', 16000000, 'reviewed', FALSE, '2026-01-17 09:45:00', '2026-01-19 10:15:00');
+
+-- ============================================================================
+-- CONTRACTS
+-- ============================================================================
+
+INSERT INTO `contracts` (`id`, `job_id`, `talent_id`, `employer_id`, `application_id`, `start_date`, `end_date`, `rate`, `rate_type`, `currency`, `total_amount`, `agency_commission_percentage`, `agency_commission_amount`, `status`, `created_at`) VALUES
+(1, 1, 1, 1, 1, '2026-02-01', NULL, 20000000, 'monthly', 'IDR', 20000000, 15.00, 3000000, 'active', '2026-01-13 10:00:00'),
+
+(2, 4, 5, 4, 4, '2026-02-01', '2026-07-31', 18000000, 'monthly', 'IDR', 108000000, 15.00, 16200000, 'active', '2026-01-14 11:30:00'),
+
+(3, 6, 6, 2, 6, '2026-01-15', '2026-04-15', 80000, 'hourly', 'IDR', 9600000, 15.00, 1440000, 'active', '2026-01-11 14:00:00'),
+
+(4, 8, 4, 3, 9, '2026-01-10', '2026-12-31', 10000000, 'monthly', 'IDR', 120000000, 15.00, 18000000, 'completed', '2026-01-03 09:00:00');
+
+-- ============================================================================
+-- PAYMENTS
+-- ============================================================================
+
+INSERT INTO `payments` (`id`, `contract_id`, `payer_id`, `payee_id`, `amount`, `currency`, `agency_commission`, `payment_method`, `transaction_id`, `status`, `paid_at`, `created_at`) VALUES
+(1, 1, 12, 4, 17000000, 'IDR', 3000000, 'bank_transfer', 'TRX-2026-02-01-001', 'completed', '2026-02-05 10:30:00', '2026-02-01 08:00:00'),
+
+(2, 2, 15, 5, 15300000, 'IDR', 2700000, 'bank_transfer', 'TRX-2026-02-01-002', 'completed', '2026-02-06 14:15:00', '2026-02-01 08:00:00'),
+
+(3, 3, 13, 6, 1632000, 'IDR', 288000, 'bank_transfer', 'TRX-2026-01-31-001', 'completed', '2026-02-01 09:20:00', '2026-01-31 08:00:00'),
+
+(4, 4, 14, 4, 8500000, 'IDR', 1500000, 'bank_transfer', 'TRX-2026-01-31-002', 'completed', '2026-02-01 11:45:00', '2026-01-31 08:00:00'),
+
+(5, 4, 14, 4, 8500000, 'IDR', 1500000, 'bank_transfer', 'TRX-2026-02-28-001', 'completed', '2026-03-02 10:00:00', '2026-02-28 08:00:00'),
+
+(6, 1, 12, 4, 17000000, 'IDR', 3000000, 'bank_transfer', 'TRX-2026-03-01-001', 'pending', NULL, '2026-03-01 08:00:00');
+
+-- ============================================================================
+-- CONVERSATIONS
+-- ============================================================================
+
+INSERT INTO `conversations` (`id`, `created_at`) VALUES
+(1, '2026-01-10 10:00:00'),
+(2, '2026-01-11 15:30:00'),
+(3, '2026-01-12 09:15:00'),
+(4, '2026-01-13 14:45:00'),
+(5, '2026-01-14 11:20:00');
+
+-- ============================================================================
+-- CONVERSATION PARTICIPANTS
+-- ============================================================================
+
+-- Versi perbaikan yang benar
+INSERT INTO `conversation_participants` (`conversation_id`, `user_id`) VALUES
+(1, 4),   -- Conversation 1: John Doe
+(1, 12),  -- Conversation 1: TechCorp
+(2, 5),   -- Conversation 2: Sarah Wilson  
+(2, 15),  -- Conversation 2: StartupHub
+(3, 4),   -- Conversation 3: John Doe
+(3, 2),   -- Conversation 3: Staff1
+(4, 6),   -- Conversation 4: Lisa Anderson
+(4, 13),  -- Conversation 4: Creative Studio
+(5, 3),   -- Conversation 5: Mike Chen
+(5, 1);   -- Conversation 5: Admin
+
+-- ============================================================================
+-- MESSAGES
+-- ============================================================================
+
+INSERT INTO `messages` (`conversation_id`, `sender_id`, `content`, `read_status`, `sent_at`) VALUES
+(1, 4, 'Hello! Thank you for considering my application. I am very excited about the Senior Full Stack Developer position.', TRUE, '2026-01-10 10:05:00'),
+(1, 12, 'Hi John! We reviewed your application and are impressed with your experience. We would like to schedule an interview.', TRUE, '2026-01-10 14:30:00'),
+(1, 4, 'That would be great! I am available any time this week.', TRUE, '2026-01-10 15:00:00'),
+(1, 12, 'Perfect! How about Thursday at 2 PM?', TRUE, '2026-01-11 09:00:00'),
+(1, 4, 'Thursday at 2 PM works perfectly for me. Looking forward to it!', TRUE, '2026-01-11 09:30:00'),
+
+(2, 5, 'Hi! I just applied for the React Native Developer position. I have some questions about the project scope.', TRUE, '2026-01-11 15:35:00'),
+(2, 15, 'Hello Sarah! Feel free to ask any questions. We are happy to provide more details.', TRUE, '2026-01-11 16:00:00'),
+(2, 5, 'What is the expected timeline for the first version of the app?', TRUE, '2026-01-11 16:15:00'),
+(2, 15, 'We are aiming to launch the MVP in 3 months. Does that timeline work for you?', TRUE, '2026-01-12 09:00:00'),
+(2, 5, 'Yes, that timeline is very reasonable. I am excited to work on this project!', FALSE, '2026-01-12 10:30:00'),
+
+(3, 4, 'Hi! I wanted to get some feedback on my application for the Full Stack Developer role.', TRUE, '2026-01-12 09:20:00'),
+(3, 2, 'Hello John! The employer loved your profile. They will be reaching out soon to schedule an interview.', TRUE, '2026-01-12 10:00:00'),
+(3, 4, 'That is great news! Thank you so much for the update.', TRUE, '2026-01-12 10:15:00'),
+
+(4, 6, 'Hello! I saw the Content Writer opening and I am very interested. Is this position still available?', TRUE, '2026-01-13 14:50:00'),
+(4, 13, 'Yes, it is! We are reviewing applications now. Your portfolio looks excellent.', TRUE, '2026-01-13 16:30:00'),
+(4, 6, 'Thank you! I specialize in SEO content and have experience with multiple industries.', TRUE, '2026-01-13 17:00:00'),
+(4, 13, 'Perfect! We will be in touch soon with next steps.', FALSE, '2026-01-14 09:00:00'),
+
+(5, 3, 'Hi, I need to update my availability status. Could you help me with that?', TRUE, '2026-01-14 11:25:00'),
+(5, 1, 'Of course! I can update that for you. What would you like to change it to?', TRUE, '2026-01-14 11:40:00'),
+(5, 3, 'Please change it to "busy" as I just accepted a new project.', TRUE, '2026-01-14 11:45:00'),
+(5, 1, 'Done! Your status has been updated to busy. Congratulations on the new project!', TRUE, '2026-01-14 12:00:00'),
+(5, 3, 'Thank you!', FALSE, '2026-01-14 12:05:00');
+
+-- ============================================================================
+-- REVIEWS
+-- ============================================================================
+
+INSERT INTO `reviews` (`contract_id`, `reviewer_id`, `reviewee_id`, `rating`, `comment`, `created_at`) VALUES
+(4, 14, 7, 5, 'Emily was absolutely fantastic! She exceeded all our expectations and delivered incredible results. Her SEO strategies increased our organic traffic by 250%. Highly recommend!', '2026-01-05 10:00:00'),
+
+(4, 7, 14, 4, 'Great company to work with. Clear communication and timely payments. The project scope was well-defined and the team was very supportive.', '2026-01-06 14:30:00');
+
+-- ============================================================================
+-- NOTIFICATIONS
+-- ============================================================================
+
+INSERT INTO `notifications` (`user_id`, `type`, `title`, `message`, `read_status`, `link_url`, `created_at`) VALUES
+(4, 'application_update', 'Application Accepted', 'Congratulations! Your application for Senior Full Stack Developer has been accepted.', TRUE, '/talent/applications.php', '2026-01-12 14:25:00'),
+
+(5, 'application_update', 'Application Status Updated', 'Your application for React Native Developer has been shortlisted.', TRUE, '/talent/applications.php', '2026-01-13 10:20:00'),
+
+(4, 'new_message', 'New Message', 'You have a new message from TechCorp Indonesia', TRUE, '/talent/messages.php?conversation=1', '2026-01-10 14:32:00'),
+
+(6, 'payment_received', 'Payment Received', 'You have received a payment of IDR 1,632,000 for your work on Content Writer project.', TRUE, '/talent/earnings.php', '2026-02-01 09:25:00'),
+
+(12, 'job_match', 'New Talent Match', 'We found 3 talents that match your job posting: Senior Full Stack Developer', FALSE, '/employer/job-detail.php?id=1', '2026-01-10 08:00:00'),
+
+(4, 'application_update', 'New Contract Created', 'A contract has been created for your accepted application. Please review and sign.', TRUE, '/talent/contracts.php', '2026-01-13 10:05:00'),
+
+(5, 'new_message', 'New Message', 'You have a new message from StartupHub Indonesia', FALSE, '/talent/messages.php?conversation=2', '2026-01-12 09:02:00'),
+
+(3, 'job_match', 'Jobs Matching Your Skills', 'We found 2 new job postings that match your skills!', FALSE, '/talent/jobs.php', '2026-01-15 09:00:00'),
+
+(13, 'application_update', 'New Application Received', 'Lisa Anderson has applied for your Content Writer position.', TRUE, '/employer/job-detail.php?id=6', '2026-01-09 15:05:00'),
+
+(1, 'new_message', 'New Message', 'You have a new message from Mike Chen', FALSE, '/admin/messages.php?conversation=5', '2026-01-14 11:27:00');
+
+-- ============================================================================
+-- SYSTEM SETTINGS
+-- ============================================================================
+
+INSERT INTO `system_settings` (`setting_key`, `setting_value`, `setting_type`, `description`) VALUES
+('agency_commission_percentage', '15.00', 'integer', 'Default commission percentage charged by the agency'),
+('site_name', 'Talent Agency Platform', 'string', 'Website name'),
+('site_url', 'https://talentagency.com', 'string', 'Website URL'),
+('contact_email', 'contact@talentagency.com', 'string', 'Contact email address'),
+('items_per_page', '20', 'integer', 'Default number of items per page in listings'),
+('max_upload_size_mb', '10', 'integer', 'Maximum file upload size in megabytes'),
+('currency_default', 'IDR', 'string', 'Default currency'),
+('email_notifications_enabled', 'true', 'boolean', 'Enable email notifications'),
+('maintenance_mode', 'false', 'boolean', 'Put site in maintenance mode'),
+('allow_talent_registration', 'true', 'boolean', 'Allow new talent registrations'),
+('allow_employer_registration', 'true', 'boolean', 'Allow new employer registrations');
+
+COMMIT;

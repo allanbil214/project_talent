@@ -1,0 +1,455 @@
+-- ============================================================================
+-- Talent Agency Platform - Database Schema
+-- Version: 1.0
+-- Database: MySQL 8.0+
+-- ============================================================================
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+-- ============================================================================
+-- DATABASE CREATION
+-- ============================================================================
+
+CREATE DATABASE IF NOT EXISTS `talent_agency_platform` 
+DEFAULT CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+USE `talent_agency_platform`;
+
+-- ============================================================================
+-- CORE TABLES
+-- ============================================================================
+
+-- Users Table (All system users)
+CREATE TABLE `users` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(255) NOT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `role` ENUM('super_admin', 'staff', 'talent', 'employer') NOT NULL,
+  `status` ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_email` (`email`),
+  KEY `idx_role` (`role`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Talents Table
+CREATE TABLE `talents` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `full_name` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(50) DEFAULT NULL,
+  `city` VARCHAR(100) DEFAULT NULL,
+  `country` VARCHAR(100) DEFAULT NULL,
+  `bio` TEXT DEFAULT NULL,
+  `profile_photo_url` VARCHAR(255) DEFAULT NULL,
+  `availability_status` ENUM('available', 'busy', 'unavailable') NOT NULL DEFAULT 'available',
+  `hourly_rate` DECIMAL(10,2) DEFAULT NULL,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
+  `preferred_work_type` SET('full-time', 'part-time', 'freelance', 'project') DEFAULT NULL,
+  `years_experience` INT DEFAULT NULL,
+  `portfolio_url` VARCHAR(255) DEFAULT NULL,
+  `resume_url` VARCHAR(255) DEFAULT NULL,
+  `date_of_birth` DATE DEFAULT NULL,
+  `verified` BOOLEAN NOT NULL DEFAULT FALSE,
+  `rating_average` DECIMAL(3,2) DEFAULT NULL,
+  `total_jobs_completed` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_id` (`user_id`),
+  KEY `idx_availability` (`availability_status`),
+  KEY `idx_verified` (`verified`),
+  KEY `idx_rating` (`rating_average`),
+  CONSTRAINT `fk_talents_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Skills Table
+CREATE TABLE `skills` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `category` VARCHAR(100) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_skill_name` (`name`),
+  KEY `idx_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Talent Skills Pivot Table
+CREATE TABLE `talent_skills` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `talent_id` INT UNSIGNED NOT NULL,
+  `skill_id` INT UNSIGNED NOT NULL,
+  `proficiency_level` ENUM('beginner', 'intermediate', 'advanced', 'expert') NOT NULL DEFAULT 'intermediate',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_talent_skill` (`talent_id`, `skill_id`),
+  KEY `idx_talent_id` (`talent_id`),
+  KEY `idx_skill_id` (`skill_id`),
+  CONSTRAINT `fk_talent_skills_talent` FOREIGN KEY (`talent_id`) REFERENCES `talents` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_talent_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Employers Table
+CREATE TABLE `employers` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `company_name` VARCHAR(255) NOT NULL,
+  `company_logo_url` VARCHAR(255) DEFAULT NULL,
+  `industry` VARCHAR(100) DEFAULT NULL,
+  `company_size` ENUM('1-10', '11-50', '51-200', '201-500', '500+') DEFAULT NULL,
+  `website` VARCHAR(255) DEFAULT NULL,
+  `description` TEXT DEFAULT NULL,
+  `address` TEXT DEFAULT NULL,
+  `phone` VARCHAR(50) DEFAULT NULL,
+  `verified` BOOLEAN NOT NULL DEFAULT FALSE,
+  `rating_average` DECIMAL(3,2) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_id` (`user_id`),
+  KEY `idx_verified` (`verified`),
+  KEY `idx_industry` (`industry`),
+  CONSTRAINT `fk_employers_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- JOB MANAGEMENT
+-- ============================================================================
+
+-- Jobs Table
+CREATE TABLE `jobs` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `employer_id` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `job_type` ENUM('full-time', 'part-time', 'contract', 'freelance') NOT NULL,
+  `location_type` ENUM('onsite', 'remote', 'hybrid') NOT NULL,
+  `location_address` VARCHAR(255) DEFAULT NULL,
+  `salary_min` DECIMAL(10,2) DEFAULT NULL,
+  `salary_max` DECIMAL(10,2) DEFAULT NULL,
+  `salary_type` ENUM('hourly', 'monthly', 'project') NOT NULL,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
+  `experience_required` INT DEFAULT NULL,
+  `status` ENUM('draft', 'pending_approval', 'active', 'filled', 'closed') NOT NULL DEFAULT 'draft',
+  `deadline` DATE DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `filled_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_employer_id` (`employer_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_job_type` (`job_type`),
+  KEY `idx_location_type` (`location_type`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_jobs_employer` FOREIGN KEY (`employer_id`) REFERENCES `employers` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Job Skills Pivot Table
+CREATE TABLE `job_skills` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_id` INT UNSIGNED NOT NULL,
+  `skill_id` INT UNSIGNED NOT NULL,
+  `required` BOOLEAN NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_job_skill` (`job_id`, `skill_id`),
+  KEY `idx_job_id` (`job_id`),
+  KEY `idx_skill_id` (`skill_id`),
+  CONSTRAINT `fk_job_skills_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_job_skills_skill` FOREIGN KEY (`skill_id`) REFERENCES `skills` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Applications Table
+CREATE TABLE `applications` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_id` INT UNSIGNED NOT NULL,
+  `talent_id` INT UNSIGNED NOT NULL,
+  `cover_letter` TEXT DEFAULT NULL,
+  `proposed_rate` DECIMAL(10,2) DEFAULT NULL,
+  `status` ENUM('pending', 'reviewed', 'shortlisted', 'rejected', 'accepted') NOT NULL DEFAULT 'pending',
+  `agency_recommended` BOOLEAN NOT NULL DEFAULT FALSE,
+  `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reviewed_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_job_talent` (`job_id`, `talent_id`),
+  KEY `idx_job_id` (`job_id`),
+  KEY `idx_talent_id` (`talent_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_applied_at` (`applied_at`),
+  CONSTRAINT `fk_applications_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_applications_talent` FOREIGN KEY (`talent_id`) REFERENCES `talents` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- CONTRACTS & PAYMENTS
+-- ============================================================================
+
+-- Contracts Table
+CREATE TABLE `contracts` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_id` INT UNSIGNED NOT NULL,
+  `talent_id` INT UNSIGNED NOT NULL,
+  `employer_id` INT UNSIGNED NOT NULL,
+  `application_id` INT UNSIGNED DEFAULT NULL,
+  `start_date` DATE NOT NULL,
+  `end_date` DATE DEFAULT NULL,
+  `rate` DECIMAL(10,2) NOT NULL,
+  `rate_type` ENUM('hourly', 'monthly', 'project') NOT NULL,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
+  `total_amount` DECIMAL(14,2) DEFAULT NULL,
+  `agency_commission_percentage` DECIMAL(5,2) NOT NULL DEFAULT 15.00,
+  `agency_commission_amount` DECIMAL(10,2) DEFAULT NULL,
+  `status` ENUM('active', 'completed', 'terminated') NOT NULL DEFAULT 'active',
+  `contract_document_url` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_job_id` (`job_id`),
+  KEY `idx_talent_id` (`talent_id`),
+  KEY `idx_employer_id` (`employer_id`),
+  KEY `idx_application_id` (`application_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_start_date` (`start_date`),
+  CONSTRAINT `fk_contracts_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_contracts_talent` FOREIGN KEY (`talent_id`) REFERENCES `talents` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_contracts_employer` FOREIGN KEY (`employer_id`) REFERENCES `employers` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_contracts_application` FOREIGN KEY (`application_id`) REFERENCES `applications` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Payments Table
+CREATE TABLE `payments` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `contract_id` INT UNSIGNED NOT NULL,
+  `payer_id` INT UNSIGNED NOT NULL,
+  `payee_id` INT UNSIGNED NOT NULL,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
+  `agency_commission` DECIMAL(10,2) DEFAULT NULL,
+  `payment_method` VARCHAR(50) DEFAULT NULL,
+  `transaction_id` VARCHAR(255) DEFAULT NULL,
+  `status` ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+  `paid_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_contract_id` (`contract_id`),
+  KEY `idx_payer_id` (`payer_id`),
+  KEY `idx_payee_id` (`payee_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_payments_contract` FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_payments_payer` FOREIGN KEY (`payer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_payments_payee` FOREIGN KEY (`payee_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- MESSAGING SYSTEM
+-- ============================================================================
+
+-- Conversations Table
+CREATE TABLE `conversations` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Conversation Participants Table
+CREATE TABLE `conversation_participants` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_conversation_user` (`conversation_id`, `user_id`),
+  KEY `idx_conversation_id` (`conversation_id`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_participants_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_participants_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Messages Table
+CREATE TABLE `messages` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_id` INT UNSIGNED NOT NULL,
+  `sender_id` INT UNSIGNED NOT NULL,
+  `content` TEXT NOT NULL,
+  `read_status` BOOLEAN NOT NULL DEFAULT FALSE,
+  `sent_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation_id` (`conversation_id`),
+  KEY `idx_sender_id` (`sender_id`),
+  KEY `idx_sent_at` (`sent_at`),
+  KEY `idx_read_status` (`read_status`),
+  CONSTRAINT `fk_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- REVIEWS & RATINGS
+-- ============================================================================
+
+-- Reviews Table
+CREATE TABLE `reviews` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `contract_id` INT UNSIGNED NOT NULL,
+  `reviewer_id` INT UNSIGNED NOT NULL,
+  `reviewee_id` INT UNSIGNED NOT NULL,
+  `rating` TINYINT UNSIGNED NOT NULL CHECK (`rating` >= 1 AND `rating` <= 5),
+  `comment` TEXT DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_contract_reviewer` (`contract_id`, `reviewer_id`),
+  KEY `idx_contract_id` (`contract_id`),
+  KEY `idx_reviewer_id` (`reviewer_id`),
+  KEY `idx_reviewee_id` (`reviewee_id`),
+  KEY `idx_rating` (`rating`),
+  CONSTRAINT `fk_reviews_contract` FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reviews_reviewer` FOREIGN KEY (`reviewer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reviews_reviewee` FOREIGN KEY (`reviewee_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- NOTIFICATIONS
+-- ============================================================================
+
+-- Notifications Table
+CREATE TABLE `notifications` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `type` VARCHAR(50) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT DEFAULT NULL,
+  `read_status` BOOLEAN NOT NULL DEFAULT FALSE,
+  `link_url` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_type` (`type`),
+  KEY `idx_read_status` (`read_status`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- SYSTEM TABLES
+-- ============================================================================
+
+-- Password Reset Tokens Table
+CREATE TABLE `password_reset_tokens` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `token` VARCHAR(255) NOT NULL,
+  `expires_at` TIMESTAMP NOT NULL,
+  `used` BOOLEAN NOT NULL DEFAULT FALSE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_token` (`token`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_expires_at` (`expires_at`),
+  CONSTRAINT `fk_password_reset_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Activity Logs Table
+CREATE TABLE `activity_logs` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED DEFAULT NULL,
+  `action` VARCHAR(100) NOT NULL,
+  `description` TEXT DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `user_agent` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_action` (`action`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- System Settings Table
+CREATE TABLE `system_settings` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(100) NOT NULL,
+  `setting_value` TEXT DEFAULT NULL,
+  `setting_type` ENUM('string', 'integer', 'boolean', 'json') NOT NULL DEFAULT 'string',
+  `description` VARCHAR(255) DEFAULT NULL,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================================
+-- TRIGGERS FOR RATING CALCULATION
+-- ============================================================================
+
+DELIMITER $$
+
+-- Update talent rating after review
+CREATE TRIGGER `update_talent_rating_after_review` 
+AFTER INSERT ON `reviews`
+FOR EACH ROW
+BEGIN
+    DECLARE avg_rating DECIMAL(3,2);
+    
+    -- Calculate average rating for talent
+    SELECT AVG(rating) INTO avg_rating
+    FROM reviews
+    WHERE reviewee_id = NEW.reviewee_id
+    AND reviewee_id IN (SELECT user_id FROM talents);
+    
+    -- Update talent rating
+    IF avg_rating IS NOT NULL THEN
+        UPDATE talents
+        SET rating_average = avg_rating
+        WHERE user_id = NEW.reviewee_id;
+    END IF;
+END$$
+
+-- Update employer rating after review
+CREATE TRIGGER `update_employer_rating_after_review` 
+AFTER INSERT ON `reviews`
+FOR EACH ROW
+BEGIN
+    DECLARE avg_rating DECIMAL(3,2);
+    
+    -- Calculate average rating for employer
+    SELECT AVG(rating) INTO avg_rating
+    FROM reviews
+    WHERE reviewee_id = NEW.reviewee_id
+    AND reviewee_id IN (SELECT user_id FROM employers);
+    
+    -- Update employer rating
+    IF avg_rating IS NOT NULL THEN
+        UPDATE employers
+        SET rating_average = avg_rating
+        WHERE user_id = NEW.reviewee_id;
+    END IF;
+END$$
+
+-- Update talent jobs completed counter
+CREATE TRIGGER `update_talent_jobs_completed` 
+AFTER UPDATE ON `contracts`
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+        UPDATE talents
+        SET total_jobs_completed = total_jobs_completed + 1
+        WHERE id = NEW.talent_id;
+    END IF;
+END$$
+
+-- Mark job as filled when contract is created
+CREATE TRIGGER `mark_job_filled_on_contract` 
+AFTER INSERT ON `contracts`
+FOR EACH ROW
+BEGIN
+    UPDATE jobs
+    SET status = 'filled', filled_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.job_id;
+END$$
+
+DELIMITER ;
+
+COMMIT;
