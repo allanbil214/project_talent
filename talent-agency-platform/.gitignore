@@ -1,0 +1,38 @@
+# Environment files
+.env
+
+# Composer
+vendor/
+composer.lock
+
+# Uploads
+uploads/profiles/*
+uploads/resumes/*
+uploads/portfolios/*
+uploads/company-logos/*
+uploads/documents/*
+!uploads/*/.htaccess
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+error_log
+debug.log
+
+# Cache
+cache/
+*.cache
+
+# Temporary files
+*.tmp
+*.bak
+*~

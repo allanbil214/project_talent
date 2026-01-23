@@ -1,0 +1,16 @@
+{
+    "name": "talent-agency/platform",
+    "description": "Talent Agency Middleman Platform",
+    "type": "project",
+    "require": {
+        "php": "^8.0",
+        "phpmailer/phpmailer": "^6.8",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "classes/"
+        }
+    },
+    "minimum-stability": "stable"
+}
