@@ -1,5 +1,6 @@
 <?php
 // config/config.php
+require_once __DIR__ . '/constants.php';
 
 // Site configuration
 define('SITE_NAME', $_ENV['SITE_NAME'] ?? 'Talent Agency Platform');
