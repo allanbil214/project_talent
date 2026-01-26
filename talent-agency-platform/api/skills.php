@@ -1,17 +1,21 @@
 <?php
 // api/skills.php
 
+// 1. Start session FIRST
 require_once __DIR__ . '/../config/session.php';
 
+// 2. Set headers
 header('Content-Type: application/json');
 
-require_once '../config/database.php';
-require_once '../classes/Database.php';
-require_once '../classes/Skill.php';
-require_once '../classes/Validator.php';
-require_once '../includes/functions.php';
+// 3. Load other configs
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../classes/Database.php';
+require_once __DIR__ . '/../classes/Skill.php';
+require_once __DIR__ . '/../classes/Validator.php';
+require_once __DIR__ . '/../includes/functions.php';
 
-$db_connection = require_once '../config/database.php';
+// 4. Get database connection - FIX THIS PART
+$db_connection = require __DIR__ . '/../config/database.php';
 $db = new Database($db_connection);
 $skill_model = new Skill($db);
 

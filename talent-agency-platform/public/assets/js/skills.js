@@ -163,6 +163,8 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.error('Full error:', xhr); // ADD THIS
+                console.error('Response text:', xhr.responseText); // ADD THIS
                 showToast('Failed to create skill. Please try again.', 'error');
             }
         });
