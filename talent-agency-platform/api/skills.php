@@ -1,7 +1,9 @@
 <?php
 // api/skills.php
+
+require_once __DIR__ . '/../config/session.php';
+
 header('Content-Type: application/json');
-session_start();
 
 require_once '../config/database.php';
 require_once '../classes/Database.php';

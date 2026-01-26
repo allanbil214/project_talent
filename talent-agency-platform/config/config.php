@@ -43,15 +43,3 @@ if (($_ENV['APP_ENV'] ?? 'development') === 'production') {
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
 }
-
-// Session configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
-
-session_name(SESSION_NAME);
-session_set_cookie_params(SESSION_LIFETIME);
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}

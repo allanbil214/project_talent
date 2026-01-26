@@ -6,6 +6,11 @@ class Upload {
     private $allowed_document_types = ['pdf', 'doc', 'docx'];
     private $max_image_size = 5242880; // 5MB
     private $max_document_size = 10485760; // 10MB
+    private $project_root;
+    
+    public function __construct() {
+        $this->project_root = dirname(__DIR__);
+    }
     
     /**
      * Upload profile photo
@@ -97,26 +102,32 @@ class Upload {
             throw new Exception('Invalid file type');
         }
         
+        // Create full destination folder path
+        $full_destination_folder = $this->project_root . '/' . $destination_folder;
+        
         // Create destination folder if it doesn't exist
-        if (!is_dir($destination_folder)) {
-            mkdir($destination_folder, 0755, true);
+        if (!is_dir($full_destination_folder)) {
+            if (!mkdir($full_destination_folder, 0755, true)) {
+                throw new Exception('Failed to create upload directory');
+            }
         }
         
         // Generate unique filename
         $filename = $this->generateUniqueFilename($extension);
-        $destination_path = $destination_folder . '/' . $filename;
+        $full_destination_path = $full_destination_folder . '/' . $filename;
         
         // Move uploaded file
-        if (!move_uploaded_file($file['tmp_name'], $destination_path)) {
+        if (!move_uploaded_file($file['tmp_name'], $full_destination_path)) {
             throw new Exception('Failed to move uploaded file');
         }
         
         // Resize image if needed
         if (in_array($extension, $this->allowed_image_types)) {
-            $this->resizeImageIfNeeded($destination_path, $extension);
+            $this->resizeImageIfNeeded($full_destination_path, $extension);
         }
         
-        return $destination_path;
+        // Return relative path (without project root)
+        return $destination_folder . '/' . $filename;
     }
     
     /**
@@ -218,8 +229,9 @@ class Upload {
      * Delete file
      */
     public function deleteFile($file_path) {
-        if (file_exists($file_path)) {
-            return unlink($file_path);
+        $full_path = $this->project_root . '/' . $file_path;
+        if (file_exists($full_path)) {
+            return unlink($full_path);
         }
         return false;
     }
@@ -259,25 +271,27 @@ class Upload {
      * Create thumbnail
      */
     public function createThumbnail($source_path, $width = 150, $height = 150) {
-        $extension = strtolower(pathinfo($source_path, PATHINFO_EXTENSION));
+        $full_source_path = $this->project_root . '/' . $source_path;
+        
+        $extension = strtolower(pathinfo($full_source_path, PATHINFO_EXTENSION));
         
         if (!in_array($extension, $this->allowed_image_types)) {
             throw new Exception('Not an image file');
         }
         
-        list($orig_width, $orig_height) = getimagesize($source_path);
+        list($orig_width, $orig_height) = getimagesize($full_source_path);
         
         // Create image resource
         switch ($extension) {
             case 'jpg':
             case 'jpeg':
-                $source = imagecreatefromjpeg($source_path);
+                $source = imagecreatefromjpeg($full_source_path);
                 break;
             case 'png':
-                $source = imagecreatefrompng($source_path);
+                $source = imagecreatefrompng($full_source_path);
                 break;
             case 'gif':
-                $source = imagecreatefromgif($source_path);
+                $source = imagecreatefromgif($full_source_path);
                 break;
             default:
                 return null;
@@ -304,18 +318,19 @@ class Upload {
         
         // Generate thumbnail filename
         $thumbnail_path = str_replace('.' . $extension, '_thumb.' . $extension, $source_path);
+        $full_thumbnail_path = $this->project_root . '/' . $thumbnail_path;
         
         // Save
         switch ($extension) {
             case 'jpg':
             case 'jpeg':
-                imagejpeg($thumbnail, $thumbnail_path, 90);
+                imagejpeg($thumbnail, $full_thumbnail_path, 90);
                 break;
             case 'png':
-                imagepng($thumbnail, $thumbnail_path, 9);
+                imagepng($thumbnail, $full_thumbnail_path, 9);
                 break;
             case 'gif':
-                imagegif($thumbnail, $thumbnail_path);
+                imagegif($thumbnail, $full_thumbnail_path);
                 break;
         }
         

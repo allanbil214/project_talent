@@ -1,16 +1,19 @@
 <?php
 // api/talents.php
+
+require_once __DIR__ . '/../config/session.php';
+
 header('Content-Type: application/json');
-session_start();
 
-require_once '../config/database.php';
-require_once '../classes/Database.php';
-require_once '../classes/Talent.php';
-require_once '../classes/Upload.php';
-require_once '../classes/Validator.php';
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../classes/Database.php';
+require_once __DIR__ . '/../classes/Talent.php';
+require_once __DIR__ . '/../classes/Upload.php';
+require_once __DIR__ . '/../classes/Validator.php';
+require_once __DIR__ . '/../includes/functions.php';
 
-$db_connection = require_once '../config/database.php';
+// Get database connection (only once)
+$db_connection = require __DIR__ . '/../config/database.php';
 $db = new Database($db_connection);
 $talent_model = new Talent($db);
 $upload = new Upload();
@@ -119,12 +122,18 @@ try {
                 jsonResponse(['success' => false, 'message' => 'No file uploaded'], 400);
             }
             
+            // Log the file info for debugging
+            error_log("Profile photo upload attempt: " . print_r($_FILES['profile_photo'], true));
+            
             try {
                 $photo_path = $upload->uploadProfilePhoto($_FILES['profile_photo']);
                 
                 // Delete old photo if exists
                 if ($talent['profile_photo_url']) {
-                    $upload->deleteFile($talent['profile_photo_url']);
+                    $old_photo_path = __DIR__ . '/../' . $talent['profile_photo_url'];
+                    if (file_exists($old_photo_path)) {
+                        unlink($old_photo_path);
+                    }
                 }
                 
                 $talent_model->updateProfilePhoto($talent['id'], $photo_path);
@@ -135,6 +144,7 @@ try {
                     'photo_url' => SITE_URL . '/' . $photo_path
                 ]);
             } catch (Exception $e) {
+                error_log("Photo upload error: " . $e->getMessage());
                 jsonResponse([
                     'success' => false,
                     'message' => $e->getMessage()
@@ -160,12 +170,17 @@ try {
                 jsonResponse(['success' => false, 'message' => 'No file uploaded'], 400);
             }
             
+            error_log("Resume upload attempt: " . print_r($_FILES['resume'], true));
+            
             try {
                 $resume_path = $upload->uploadResume($_FILES['resume']);
                 
                 // Delete old resume if exists
                 if ($talent['resume_url']) {
-                    $upload->deleteFile($talent['resume_url']);
+                    $old_resume_path = __DIR__ . '/../' . $talent['resume_url'];
+                    if (file_exists($old_resume_path)) {
+                        unlink($old_resume_path);
+                    }
                 }
                 
                 $talent_model->updateResume($talent['id'], $resume_path);
@@ -176,6 +191,7 @@ try {
                     'resume_url' => SITE_URL . '/' . $resume_path
                 ]);
             } catch (Exception $e) {
+                error_log("Resume upload error: " . $e->getMessage());
                 jsonResponse([
                     'success' => false,
                     'message' => $e->getMessage()
@@ -351,7 +367,7 @@ try {
             jsonResponse(['success' => false, 'message' => 'Invalid action'], 400);
     }
 } catch (Exception $e) {
-    error_log("API Error: " . $e->getMessage());
+    error_log("API Error in talents.php: " . $e->getMessage() . "\n" . $e->getTraceAsString());
     jsonResponse([
         'success' => false,
         'message' => 'An error occurred: ' . $e->getMessage()

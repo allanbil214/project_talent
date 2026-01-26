@@ -1,20 +1,16 @@
 # uploads/profiles/.htaccess
 
+Options -ExecCGI -Indexes
+
 # Disable script execution
-Options -ExecCGI
 AddHandler cgi-script .php .php3 .php4 .phtml .pl .py .jsp .asp .htm .shtml .sh .cgi
-Options -Indexes
 
-# Only allow image files
-<FilesMatch "\.(jpg|jpeg|png|gif)$">
-    Order Allow,Deny
-    Allow from all
-</FilesMatch>
+# Deny everything by default
+Require all denied
 
-# Deny everything else
-<FilesMatch "^.*$">
-    Order Deny,Allow
-    Deny from all
+# Allow only image files
+<FilesMatch "\.(jpe?g|png|gif)$">
+    Require all granted
 </FilesMatch>
 
 # Security headers
