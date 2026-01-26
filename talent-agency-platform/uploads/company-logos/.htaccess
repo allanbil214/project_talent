@@ -1,0 +1,24 @@
+# uploads/company-logos/.htaccess
+
+# Disable script execution
+Options -ExecCGI
+AddHandler cgi-script .php .php3 .php4 .phtml .pl .py .jsp .asp .htm .shtml .sh .cgi
+Options -Indexes
+
+# Only allow image files
+<FilesMatch "\.(jpg|jpeg|png|gif|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Deny everything else
+<FilesMatch "^.*$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+</IfModule>

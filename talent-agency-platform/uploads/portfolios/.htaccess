@@ -1,0 +1,23 @@
+# uploads/portfolios/.htaccess
+
+# Allow images, deny everything else
+Options -ExecCGI
+AddHandler cgi-script .php .php3 .php4 .phtml .pl .py .jsp .asp .htm .shtml .sh .cgi
+Options -Indexes
+
+# Allow images and PDFs
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Deny everything else
+<FilesMatch "^.*$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
