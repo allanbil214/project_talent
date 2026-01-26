@@ -3,50 +3,50 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <h5><?php echo SITE_NAME; ?></h5>
-                    <p class="text-muted">Connecting talented professionals with great opportunities.</p>
+                    <h5 class="fw-bold"><?php echo SITE_NAME; ?></h5>
+                    <p class="text-white">Connecting talented professionals with great opportunities.</p>
                 </div>
                 <div class="col-md-2 mb-3">
-                    <h6>Quick Links</h6>
+                    <h6 class="fw-bold">Quick Links</h6>
                     <ul class="list-unstyled">
-                        <li><a href="<?php echo SITE_URL; ?>/public/index.php" class="text-muted">Home</a></li>
-                        <li><a href="<?php echo SITE_URL; ?>/public/about.php" class="text-muted">About</a></li>
-                        <li><a href="<?php echo SITE_URL; ?>/public/how-it-works.php" class="text-muted">How It Works</a></li>
-                        <li><a href="<?php echo SITE_URL; ?>/public/pricing.php" class="text-muted">Pricing</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/index.php" class="text-white">Home</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/about.php" class="text-white">About</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/how-it-works.php" class="text-white">How It Works</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/pricing.php" class="text-white">Pricing</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-3">
-                    <h6>For Talents</h6>
+                    <h6 class="fw-bold">For Talents</h6>
                     <ul class="list-unstyled">
-                        <li><a href="<?php echo SITE_URL; ?>/public/register.php?role=talent" class="text-muted">Register</a></li>
-                        <li><a href="<?php echo SITE_URL; ?>/public/login.php" class="text-muted">Login</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/register.php?role=talent" class="text-white">Register</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/login.php" class="text-white">Login</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-3">
-                    <h6>For Employers</h6>
+                    <h6 class="fw-bold">For Employers</h6>
                     <ul class="list-unstyled">
-                        <li><a href="<?php echo SITE_URL; ?>/public/register.php?role=employer" class="text-muted">Register</a></li>
-                        <li><a href="<?php echo SITE_URL; ?>/public/login.php" class="text-muted">Login</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/register.php?role=employer" class="text-white">Register</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/login.php" class="text-white">Login</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-3">
-                    <h6>Contact</h6>
+                    <h6 class="fw-bold">Contact</h6>
                     <ul class="list-unstyled">
-                        <li><a href="<?php echo SITE_URL; ?>/public/contact.php" class="text-muted">Contact Us</a></li>
-                        <li class="text-muted"><?php echo SITE_EMAIL; ?></li>
+                        <li><a href="<?php echo SITE_URL; ?>/public/contact.php" class="text-white">Contact Us</a></li>
+                        <li class="text-white"><?php echo SITE_EMAIL; ?></li>
                     </ul>
                 </div>
             </div>
             <hr class="my-4 bg-secondary">
             <div class="row">
                 <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0 text-muted">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
+                    <p class="mb-0 text-white">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="text-muted me-3"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="text-muted me-3"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="text-muted me-3"><i class="fab fa-linkedin"></i></a>
-                    <a href="#" class="text-muted"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white me-3"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
         </div>
