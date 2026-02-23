@@ -63,6 +63,18 @@ function formatCurrency($amount, $currency = DEFAULT_CURRENCY) {
     return $currency . ' ' . number_format($amount, 2);
 }
 
+function formatSalaryRange($min, $max, $type = 'monthly') {
+    $suffix = '/' . $type;
+    if ($min && $max) {
+        return formatCurrency($min) . ' - ' . formatCurrency($max) . $suffix;
+    } elseif ($min) {
+        return 'From ' . formatCurrency($min) . $suffix;
+    } elseif ($max) {
+        return 'Up to ' . formatCurrency($max) . $suffix;
+    }
+    return 'Negotiable';
+}
+
 /**
  * Generate random token
  */
@@ -335,4 +347,28 @@ function getRequestMethod() {
  */
 function getJsonInput() {
     return json_decode(file_get_contents('php://input'), true);
+}
+
+function getApplicationStatusBadge($status) {
+    $map = [
+        'pending'     => 'bg-warning text-dark',
+        'reviewed'    => 'bg-info text-white',
+        'shortlisted' => 'bg-primary text-white',
+        'accepted'    => 'bg-success text-white',
+        'rejected'    => 'bg-danger text-white',
+    ];
+    $class = $map[$status] ?? 'bg-secondary text-white';
+    return '<span class="badge ' . $class . '">' . ucfirst($status) . '</span>';
+}
+
+function getJobStatusBadge($status) {
+    $map = [
+        'draft'            => 'bg-secondary text-white',
+        'pending_approval' => 'bg-warning text-dark',
+        'active'           => 'bg-success text-white',
+        'filled'           => 'bg-primary text-white',
+        'closed'           => 'bg-danger text-white',
+    ];
+    $class = $map[$status] ?? 'bg-secondary text-white';
+    return '<span class="badge ' . $class . '">' . ucfirst(str_replace('_', ' ', $status)) . '</span>';
 }

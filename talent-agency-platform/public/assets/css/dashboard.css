@@ -292,3 +292,21 @@
 .progress-bar {
     border-radius: 10px;
 }
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+}
+
+.avatar-md {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+}

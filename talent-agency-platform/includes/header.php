@@ -17,7 +17,7 @@ $page_description = $page_description ?? 'Connect talented professionals with em
     <meta name="author" content="<?php echo SITE_NAME; ?>">
     
     <title><?php echo htmlspecialchars($page_title); ?></title>
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="<?php echo SITE_URL; ?>/public/assets/images/favicon.png">
     

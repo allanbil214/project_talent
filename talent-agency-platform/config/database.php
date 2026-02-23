@@ -12,7 +12,7 @@ if (file_exists(__DIR__ . '/../.env')) {
 // Database configuration
 define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
 define('DB_PORT', $_ENV['DB_PORT'] ?? '3307');
-define('DB_NAME', $_ENV['DB_NAME'] ?? 'talent_agency');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'talent_agency_platform');
 define('DB_USER', $_ENV['DB_USER'] ?? 'root');
 define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 define('DB_CHARSET', 'utf8mb4');

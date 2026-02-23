@@ -60,6 +60,11 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
+    <!-- Global JS vars -->
+    <script>
+        const SITE_URL = '<?php echo SITE_URL; ?>';
+    </script>
+
     <!-- Main JS -->
     <script src="<?php echo SITE_URL; ?>/public/assets/js/main.js"></script>
     
