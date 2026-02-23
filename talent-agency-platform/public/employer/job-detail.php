@@ -196,6 +196,10 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <button class="btn btn-outline-success" data-filter="accepted">Accepted</button>
                                     <button class="btn btn-outline-danger" data-filter="rejected">Rejected</button>
                                 </div>
+                                <a href="<?php echo SITE_URL; ?>/public/employer/applications.php?job_id=<?php echo $job_id; ?>"
+                                class="btn btn-sm btn-primary">
+                                    <i class="fas fa-list-ul me-1"></i> Full Review
+                                </a>
                             </div>
                         </div>
 

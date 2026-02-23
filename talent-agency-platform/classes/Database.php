@@ -17,8 +17,8 @@ class Database {
             $stmt->execute($params);
             return $stmt;
         } catch (PDOException $e) {
-            error_log("Database query error: " . $e->getMessage());
-            throw new Exception("Database error occurred");
+            error_log("SQL: $sql | Params: " . json_encode($params) . " | Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage()); // temp: show real error
         }
     }
     

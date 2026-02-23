@@ -162,7 +162,8 @@ function getAvatarUrl($photo_url) {
     if (strpos($photo_url, 'http') === 0) {
         return $photo_url;
     }
-    return SITE_URL . '/' . $photo_url;
+    // Strip any accidental leading slash then prepend SITE_URL
+    return SITE_URL . '/' . ltrim($photo_url, '/');
 }
 
 /**
@@ -175,7 +176,7 @@ function getCompanyLogoUrl($logo_url) {
     if (strpos($logo_url, 'http') === 0) {
         return $logo_url;
     }
-    return SITE_URL . '/' . $logo_url;
+    return SITE_URL . '/' . ltrim($logo_url, '/');
 }
 
 /**
@@ -371,4 +372,40 @@ function getJobStatusBadge($status) {
     ];
     $class = $map[$status] ?? 'bg-secondary text-white';
     return '<span class="badge ' . $class . '">' . ucfirst(str_replace('_', ' ', $status)) . '</span>';
+}
+
+/**
+ * Display and clear flash message (renders Bootstrap alert HTML)
+ */
+function flashMessage() {
+    $flash = getFlash();
+
+    // Also support the legacy $_SESSION['flash_success/error/info'] keys
+    if (!$flash) {
+        if (!empty($_SESSION['flash_success'])) {
+            $flash = ['type' => 'success', 'message' => $_SESSION['flash_success']];
+            unset($_SESSION['flash_success']);
+        } elseif (!empty($_SESSION['flash_error'])) {
+            $flash = ['type' => 'danger', 'message' => $_SESSION['flash_error']];
+            unset($_SESSION['flash_error']);
+        } elseif (!empty($_SESSION['flash_info'])) {
+            $flash = ['type' => 'info', 'message' => $_SESSION['flash_info']];
+            unset($_SESSION['flash_info']);
+        } elseif (!empty($_SESSION['flash_warning'])) {
+            $flash = ['type' => 'warning', 'message' => $_SESSION['flash_warning']];
+            unset($_SESSION['flash_warning']);
+        }
+    }
+
+    if (!$flash) return;
+
+    $type    = htmlspecialchars($flash['type']);
+    $message = htmlspecialchars($flash['message']);
+
+    echo <<<HTML
+<div class="alert alert-{$type} alert-dismissible fade show" role="alert">
+    {$message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+HTML;
 }
