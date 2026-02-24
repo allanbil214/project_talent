@@ -1,53 +1,162 @@
 <?php
 // classes/Upload.php
 
+require_once __DIR__ . '/../includes/functions.php'; // Add this at the top
+
 class Upload {
     private $allowed_image_types = ['jpg', 'jpeg', 'png', 'gif'];
     private $allowed_document_types = ['pdf', 'doc', 'docx'];
     private $max_image_size = 5242880; // 5MB
     private $max_document_size = 10485760; // 10MB
     private $project_root;
+    private $db; // Add database property for logging
     
-    public function __construct() {
+    public function __construct($db = null) { // Accept database connection
         $this->project_root = dirname(__DIR__);
+        $this->db = $db; // Store database connection
     }
     
     /**
      * Upload profile photo
      */
     public function uploadProfilePhoto($file) {
-        return $this->uploadImage($file, 'uploads/profiles');
+        try {
+            $result = $this->uploadImage($file, 'uploads/profiles');
+            
+            // Log successful upload
+            if ($this->db) {
+                logActivity($this->db, 'file_uploaded', 
+                    "Profile photo uploaded: {$result}. " .
+                    "Size: " . $this->formatFileSize($file['size']) . ", " .
+                    "Type: {$file['type']}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            // Log failed upload
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_failed', 
+                    "Profile photo upload failed: " . $e->getMessage() . ". " .
+                    "Filename: {$file['name']}, Size: " . $this->formatFileSize($file['size']));
+            }
+            throw $e;
+        }
     }
     
     /**
      * Upload company logo
      */
     public function uploadCompanyLogo($file) {
-        return $this->uploadImage($file, 'uploads/company-logos');
+        try {
+            $result = $this->uploadImage($file, 'uploads/company-logos');
+            
+            // Log successful upload
+            if ($this->db) {
+                logActivity($this->db, 'file_uploaded', 
+                    "Company logo uploaded: {$result}. " .
+                    "Size: " . $this->formatFileSize($file['size']) . ", " .
+                    "Type: {$file['type']}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            // Log failed upload
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_failed', 
+                    "Company logo upload failed: " . $e->getMessage() . ". " .
+                    "Filename: {$file['name']}, Size: " . $this->formatFileSize($file['size']));
+            }
+            throw $e;
+        }
     }
     
     /**
      * Upload resume
      */
     public function uploadResume($file) {
-        return $this->uploadDocument($file, 'uploads/resumes');
+        try {
+            $result = $this->uploadDocument($file, 'uploads/resumes');
+            
+            // Log successful upload
+            if ($this->db) {
+                logActivity($this->db, 'file_uploaded', 
+                    "Resume uploaded: {$result}. " .
+                    "Size: " . $this->formatFileSize($file['size']) . ", " .
+                    "Type: {$file['type']}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            // Log failed upload
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_failed', 
+                    "Resume upload failed: " . $e->getMessage() . ". " .
+                    "Filename: {$file['name']}, Size: " . $this->formatFileSize($file['size']));
+            }
+            throw $e;
+        }
     }
     
     /**
      * Upload portfolio file
      */
     public function uploadPortfolio($file) {
-        return $this->uploadFile($file, 'uploads/portfolios', 
-            array_merge($this->allowed_image_types, $this->allowed_document_types),
-            $this->max_document_size
-        );
+        try {
+            $result = $this->uploadFile($file, 'uploads/portfolios', 
+                array_merge($this->allowed_image_types, $this->allowed_document_types),
+                $this->max_document_size
+            );
+            
+            // Log successful upload
+            if ($this->db) {
+                logActivity($this->db, 'file_uploaded', 
+                    "Portfolio file uploaded: {$result}. " .
+                    "Size: " . $this->formatFileSize($file['size']) . ", " .
+                    "Type: {$file['type']}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            // Log failed upload
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_failed', 
+                    "Portfolio upload failed: " . $e->getMessage() . ". " .
+                    "Filename: {$file['name']}, Size: " . $this->formatFileSize($file['size']));
+            }
+            throw $e;
+        }
     }
     
     /**
      * Upload contract document
      */
     public function uploadContract($file) {
-        return $this->uploadDocument($file, 'uploads/documents');
+        try {
+            $result = $this->uploadDocument($file, 'uploads/documents');
+            
+            // Log successful upload
+            if ($this->db) {
+                logActivity($this->db, 'file_uploaded', 
+                    "Contract document uploaded: {$result}. " .
+                    "Size: " . $this->formatFileSize($file['size']) . ", " .
+                    "Type: {$file['type']}");
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            // Log failed upload
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_failed', 
+                    "Contract document upload failed: " . $e->getMessage() . ". " .
+                    "Filename: {$file['name']}, Size: " . $this->formatFileSize($file['size']));
+            }
+            throw $e;
+        }
     }
     
     /**
@@ -72,12 +181,23 @@ class Upload {
     private function uploadFile($file, $destination_folder, $allowed_types, $max_size) {
         // Check if file was uploaded
         if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            throw new Exception('No file uploaded');
+            $error_msg = 'No file uploaded';
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_validation_failed', 
+                    "Upload validation failed: {$error_msg}");
+            }
+            throw new Exception($error_msg);
         }
         
         // Check for upload errors
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception($this->getUploadErrorMessage($file['error']));
+            $error_msg = $this->getUploadErrorMessage($file['error']);
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_error', 
+                    "Upload error (code {$file['error']}): {$error_msg}. " .
+                    "Filename: {$file['name']}");
+            }
+            throw new Exception($error_msg);
         }
         
         // Get file extension
@@ -85,12 +205,24 @@ class Upload {
         
         // Validate file type
         if (!in_array($extension, $allowed_types)) {
-            throw new Exception('Invalid file type. Allowed types: ' . implode(', ', $allowed_types));
+            $error_msg = 'Invalid file type. Allowed types: ' . implode(', ', $allowed_types);
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_type_invalid', 
+                    "Invalid file type: {$extension}. " .
+                    "Filename: {$file['name']}, Allowed: " . implode(', ', $allowed_types));
+            }
+            throw new Exception($error_msg);
         }
         
         // Validate file size
         if ($file['size'] > $max_size) {
-            throw new Exception('File too large. Maximum size: ' . $this->formatFileSize($max_size));
+            $error_msg = 'File too large. Maximum size: ' . $this->formatFileSize($max_size);
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_size_invalid', 
+                    "File too large: " . $this->formatFileSize($file['size']) . ". " .
+                    "Filename: {$file['name']}, Max allowed: " . $this->formatFileSize($max_size));
+            }
+            throw new Exception($error_msg);
         }
         
         // Validate MIME type
@@ -99,7 +231,13 @@ class Upload {
         finfo_close($finfo);
         
         if (!$this->isValidMimeType($mime_type, $extension)) {
-            throw new Exception('Invalid file type');
+            $error_msg = 'Invalid file type (MIME mismatch)';
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_mime_invalid', 
+                    "MIME type mismatch: Extension {$extension}, MIME {$mime_type}. " .
+                    "Filename: {$file['name']}");
+            }
+            throw new Exception($error_msg);
         }
         
         // Create full destination folder path
@@ -108,7 +246,18 @@ class Upload {
         // Create destination folder if it doesn't exist
         if (!is_dir($full_destination_folder)) {
             if (!mkdir($full_destination_folder, 0755, true)) {
-                throw new Exception('Failed to create upload directory');
+                $error_msg = 'Failed to create upload directory';
+                if ($this->db) {
+                    logActivity($this->db, 'file_upload_directory_failed', 
+                        "Failed to create directory: {$full_destination_folder}");
+                }
+                throw new Exception($error_msg);
+            }
+            
+            // Log directory creation
+            if ($this->db) {
+                logActivity($this->db, 'upload_directory_created', 
+                    "Upload directory created: {$destination_folder}");
             }
         }
         
@@ -118,12 +267,24 @@ class Upload {
         
         // Move uploaded file
         if (!move_uploaded_file($file['tmp_name'], $full_destination_path)) {
-            throw new Exception('Failed to move uploaded file');
+            $error_msg = 'Failed to move uploaded file';
+            if ($this->db) {
+                logActivity($this->db, 'file_upload_move_failed', 
+                    "Failed to move file to: {$full_destination_path}");
+            }
+            throw new Exception($error_msg);
         }
         
         // Resize image if needed
+        $resized = false;
         if (in_array($extension, $this->allowed_image_types)) {
-            $this->resizeImageIfNeeded($full_destination_path, $extension);
+            $resized = $this->resizeImageIfNeeded($full_destination_path, $extension);
+        }
+        
+        // Log image resizing if it happened
+        if ($resized && $this->db) {
+            logActivity($this->db, 'image_resized', 
+                "Image resized during upload: {$filename} in {$destination_folder}");
         }
         
         // Return relative path (without project root)
@@ -169,7 +330,7 @@ class Upload {
         
         // Check if resize is needed
         if ($width <= $max_width && $height <= $max_height) {
-            return;
+            return false;
         }
         
         // Calculate new dimensions
@@ -190,7 +351,7 @@ class Upload {
                 $source = imagecreatefromgif($file_path);
                 break;
             default:
-                return;
+                return false;
         }
         
         // Create new image
@@ -223,6 +384,8 @@ class Upload {
         // Free memory
         imagedestroy($source);
         imagedestroy($destination);
+        
+        return true;
     }
     
     /**
@@ -230,41 +393,41 @@ class Upload {
      */
     public function deleteFile($file_path) {
         $full_path = $this->project_root . '/' . $file_path;
-        if (file_exists($full_path)) {
-            return unlink($full_path);
-        }
-        return false;
-    }
-    
-    /**
-     * Get upload error message
-     */
-    private function getUploadErrorMessage($error_code) {
-        $errors = [
-            UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive in php.ini',
-            UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive in HTML form',
-            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-            UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
-        ];
         
-        return $errors[$error_code] ?? 'Unknown upload error';
-    }
-    
-    /**
-     * Format file size
-     */
-    private function formatFileSize($bytes) {
-        if ($bytes >= 1073741824) {
-            return number_format($bytes / 1073741824, 2) . ' GB';
-        } elseif ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 2) . ' MB';
-        } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 2) . ' KB';
+        if (file_exists($full_path)) {
+            $file_size = filesize($full_path);
+            $result = unlink($full_path);
+            
+            // Log file deletion
+            if ($result && $this->db) {
+                logActivity($this->db, 'file_deleted', 
+                    "File deleted: {$file_path}. " .
+                    "Size: " . $this->formatFileSize($file_size));
+            }
+            
+            // Also delete thumbnail if exists
+            $extension = pathinfo($file_path, PATHINFO_EXTENSION);
+            $thumbnail_path = str_replace('.' . $extension, '_thumb.' . $extension, $file_path);
+            $full_thumbnail_path = $this->project_root . '/' . $thumbnail_path;
+            
+            if (file_exists($full_thumbnail_path)) {
+                unlink($full_thumbnail_path);
+                if ($this->db) {
+                    logActivity($this->db, 'file_deleted', 
+                        "Thumbnail deleted: {$thumbnail_path}");
+                }
+            }
+            
+            return $result;
         }
-        return $bytes . ' bytes';
+        
+        // Log failed deletion
+        if ($this->db) {
+            logActivity($this->db, 'file_delete_failed', 
+                "Failed to delete file - not found: {$file_path}");
+        }
+        
+        return false;
     }
     
     /**
@@ -273,9 +436,21 @@ class Upload {
     public function createThumbnail($source_path, $width = 150, $height = 150) {
         $full_source_path = $this->project_root . '/' . $source_path;
         
+        if (!file_exists($full_source_path)) {
+            if ($this->db) {
+                logActivity($this->db, 'thumbnail_creation_failed', 
+                    "Thumbnail creation failed - source not found: {$source_path}");
+            }
+            throw new Exception('Source file not found');
+        }
+        
         $extension = strtolower(pathinfo($full_source_path, PATHINFO_EXTENSION));
         
         if (!in_array($extension, $this->allowed_image_types)) {
+            if ($this->db) {
+                logActivity($this->db, 'thumbnail_creation_failed', 
+                    "Thumbnail creation failed - not an image: {$source_path}");
+            }
             throw new Exception('Not an image file');
         }
         
@@ -338,6 +513,43 @@ class Upload {
         imagedestroy($source);
         imagedestroy($thumbnail);
         
+        // Log thumbnail creation
+        if ($this->db) {
+            logActivity($this->db, 'thumbnail_created', 
+                "Thumbnail created: {$thumbnail_path} from source: {$source_path}");
+        }
+        
         return $thumbnail_path;
+    }
+    
+    /**
+     * Get upload error message
+     */
+    private function getUploadErrorMessage($error_code) {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive in php.ini',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive in HTML form',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+        ];
+        
+        return $errors[$error_code] ?? 'Unknown upload error';
+    }
+    
+    /**
+     * Format file size
+     */
+    private function formatFileSize($bytes) {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' bytes';
     }
 }

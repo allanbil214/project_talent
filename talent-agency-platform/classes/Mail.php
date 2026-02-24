@@ -4,11 +4,15 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+require_once __DIR__ . '/../includes/functions.php'; // Add this at the top
+
 class Mail {
     private $mailer;
+    private $db; // Add database property
     
-    public function __construct() {
+    public function __construct($db = null) { // Accept database connection
         $this->mailer = new PHPMailer(true);
+        $this->db = $db; // Store database connection
         $this->configure();
     }
     
@@ -46,10 +50,26 @@ class Mail {
             $this->mailer->Body = $body;
             $this->mailer->AltBody = $alt_body ?: strip_tags($body);
             
-            return $this->mailer->send();
+            $result = $this->mailer->send();
+            
+            // Log successful email
+            if ($result && $this->db) {
+                logActivity($this->db, 'email_sent', 
+                    "Email sent to: {$to}, Subject: {$subject}");
+            }
+            
+            return $result;
             
         } catch (Exception $e) {
-            error_log("Mail sending error: " . $this->mailer->ErrorInfo);
+            $error = $this->mailer->ErrorInfo;
+            error_log("Mail sending error: " . $error);
+            
+            // Log email failure
+            if ($this->db) {
+                logActivity($this->db, 'email_failed', 
+                    "Failed to send email to: {$to}, Subject: {$subject}, Error: {$error}");
+            }
+            
             return false;
         }
     }
@@ -72,7 +92,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'welcome_email_sent', 
+                "Welcome email sent to {$role_text}: {$to}, Name: {$name}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -94,7 +121,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'password_reset_email_sent', 
+                "Password reset email sent to: {$to}, Token: {$token}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -113,7 +147,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'application_received_email_sent', 
+                "Application received email sent to talent: {$to}, Name: {$talent_name}, Job: {$job_title}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -131,7 +172,15 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'new_application_notification_sent', 
+                "New application notification sent to employer: {$to}, Company: {$company_name}, " .
+                "Talent: {$talent_name}, Job: {$job_title}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -148,6 +197,7 @@ class Mail {
         ];
         
         $message = $status_messages[$status] ?? "Your application status has been updated";
+        $status_display = strtoupper($status);
         
         $body = "
             <h2>Application Status Update</h2>
@@ -158,7 +208,15 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'application_status_email_sent', 
+                "Application status email sent to talent: {$to}, Name: {$talent_name}, " .
+                "Job: {$job_title}, Status: {$status_display}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -177,7 +235,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'contract_created_email_sent', 
+                "Contract created email sent to: {$to}, Name: {$name}, Job: {$job_title}, Start Date: {$start_date}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -197,7 +262,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'payment_received_email_sent', 
+                "Payment received email sent to: {$to}, Name: {$name}, Amount: {$formatted_amount}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -215,7 +287,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'new_message_email_sent', 
+                "New message notification sent to: {$to}, Recipient: {$recipient_name}, Sender: {$sender_name}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -234,7 +313,14 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'job_approved_email_sent', 
+                "Job approved email sent to employer: {$to}, Company: {$company_name}, Job: {$job_title}");
+        }
+        
+        return $result;
     }
     
     /**
@@ -254,6 +340,65 @@ class Mail {
             <p>Best regards,<br>" . SITE_NAME . " Team</p>
         ";
         
-        return $this->send($to, $subject, $body);
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'review_received_email_sent', 
+                "Review received email sent to: {$to}, Name: {$name}, " .
+                "Reviewer: {$reviewer_name}, Rating: {$rating} stars");
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Send bulk email (for admin use)
+     */
+    public function sendBulkEmail($recipients, $subject, $body, $alt_body = '') {
+        $success_count = 0;
+        $fail_count = 0;
+        $failed_emails = [];
+        
+        foreach ($recipients as $recipient) {
+            $to = is_array($recipient) ? $recipient['email'] : $recipient;
+            
+            if ($this->send($to, $subject, $body, $alt_body)) {
+                $success_count++;
+            } else {
+                $fail_count++;
+                $failed_emails[] = $to;
+            }
+        }
+        
+        // Log bulk email results
+        if ($this->db) {
+            logActivity($this->db, 'bulk_email_sent', 
+                "Bulk email sent. Subject: {$subject}, " .
+                "Success: {$success_count}, Failed: {$fail_count}" .
+                (!empty($failed_emails) ? ", Failed emails: " . implode(', ', $failed_emails) : ""));
+        }
+        
+        return [
+            'success' => $success_count,
+            'fail' => $fail_count,
+            'failed_emails' => $failed_emails
+        ];
+    }
+    
+    /**
+     * Test email configuration
+     */
+    public function testConfiguration($to) {
+        $subject = "Test Email from " . SITE_NAME;
+        $body = "<h2>Test Email</h2><p>Your email configuration is working correctly!</p>";
+        
+        $result = $this->send($to, $subject, $body);
+        
+        if ($result && $this->db) {
+            logActivity($this->db, 'email_test', 
+                "Test email sent to: {$to} - Configuration test successful");
+        }
+        
+        return $result;
     }
 }
