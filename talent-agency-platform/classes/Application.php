@@ -14,12 +14,16 @@ class Application {
     public function create($data) {
         // Check if already applied
         if ($this->hasApplied($data['job_id'], $data['talent_id'])) {
+            logActivity($this->db, 'application_duplicate', 
+                "Talent #{$data['talent_id']} attempted to re-apply to job #{$data['job_id']}");
             throw new Exception('You have already applied to this job');
         }
 
         // Check job is still active
-        $job = $this->db->fetchOne("SELECT id FROM jobs WHERE id = ? AND status = 'active'", [$data['job_id']]);
+        $job = $this->db->fetchOne("SELECT id, title FROM jobs WHERE id = ? AND status = 'active'", [$data['job_id']]);
         if (!$job) {
+            logActivity($this->db, 'application_failed', 
+                "Talent #{$data['talent_id']} attempted to apply to inactive/non-existent job #{$data['job_id']}");
             throw new Exception('This job is no longer available.');
         }
 
@@ -37,7 +41,13 @@ class Application {
             $data['agency_recommended'] ?? false
         ];
 
-        return $this->db->insert($sql, $params);
+        $application_id = $this->db->insert($sql, $params);
+		
+		// Log successful application
+        logActivity($this->db, 'application_created', 
+            "Talent #{$data['talent_id']} applied to job #{$data['job_id']}: '{$job['title']}'. Application ID: {$application_id}");
+
+        return $application_id;
     }
 
     /**
@@ -170,26 +180,54 @@ class Application {
      * Update application status
      */
     public function updateStatus($id, $status) {
+        // Get current application info for logging
+        $application = $this->getById($id);
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+
+        $old_status = $application['status'];
+        
         $sql = "UPDATE applications
                 SET status = ?, reviewed_at = NOW()
                 WHERE id = ?";
 
-        return $this->db->update($sql, [$status, $id]);
+        $result = $this->db->update($sql, [$status, $id]);
+        
+        // Log status change
+        logActivity($this->db, 'application_status_changed', 
+            "Application #{$id} status changed from '{$old_status}' to '{$status}'. " .
+            "Job: '{$application['job_title']}', Talent: '{$application['talent_name']}'");
+
+        return $result;
     }
 
     /**
      * Update application fields
      */
     public function update($id, $data) {
+        // Get current application info for logging
+        $application = $this->getById($id);
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+
         $allowed_fields = ['cover_letter', 'proposed_rate', 'status', 'agency_recommended'];
 
         $set_clauses = [];
         $params = [];
+        $changes = [];
 
         foreach ($data as $field => $value) {
             if (in_array($field, $allowed_fields)) {
                 $set_clauses[] = "{$field} = ?";
                 $params[] = $value;
+                
+                // Track what changed
+                if (isset($application[$field]) && $application[$field] != $value) {
+                    $old_value = $application[$field];
+                    $changes[] = "{$field}: '{$old_value}' → '{$value}'";
+                }
             }
         }
 
@@ -200,16 +238,39 @@ class Application {
         $params[] = $id;
 
         $sql = "UPDATE applications SET " . implode(', ', $set_clauses) . " WHERE id = ?";
-        return $this->db->update($sql, $params);
+        $result = $this->db->update($sql, $params);
+        
+        // Log updates if something changed
+        if ($result && !empty($changes)) {
+            logActivity($this->db, 'application_updated', 
+                "Application #{$id} updated. Changes: " . implode(', ', $changes) . ". " .
+                "Job: '{$application['job_title']}', Talent: '{$application['talent_name']}'");
+        }
+
+        return $result;
     }
 
     /**
      * Delete application
      */
     public function delete($id) {
+        // Get application info for logging
+        $application = $this->getById($id);
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+
         $sql = "DELETE FROM applications WHERE id = ?";
-        return $this->db->delete($sql, [$id]);
+        $result = $this->db->delete($sql, [$id]);
+        
+        // Log deletion
+        logActivity($this->db, 'application_deleted', 
+            "Application #{$id} deleted. Job: '{$application['job_title']}', " .
+            "Talent: '{$application['talent_name']}', Status: '{$application['status']}'");
+
+        return $result;
     }
+
 
     /**
      * Check if talent has already applied to job
@@ -351,16 +412,52 @@ class Application {
      * Mark as agency recommended
      */
     public function markAsRecommended($id, $recommended = true) {
+        // Get application info for logging
+        $application = $this->getById($id);
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+
+        $recommended_val = $recommended ? 1 : 0;
         $sql = "UPDATE applications SET agency_recommended = ? WHERE id = ?";
-        return $this->db->update($sql, [$recommended ? 1 : 0, $id]);
+        $result = $this->db->update($sql, [$recommended_val, $id]);
+        
+        // Log recommendation change
+        $action = $recommended ? 'application_recommended' : 'application_unrecommended';
+        $status_text = $recommended ? 'marked as recommended' : 'removed from recommendations';
+        
+        logActivity($this->db, $action, 
+            "Application #{$id} {$status_text} by agency. " .
+            "Job: '{$application['job_title']}', Talent: '{$application['talent_name']}'");
+
+        return $result;
     }
 
     /**
      * Toggle agency recommendation
      */
     public function toggleRecommendation($id) {
+        // Get current state
+        $application = $this->getById($id);
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+
+        $was_recommended = $application['agency_recommended'];
+        
         $sql = "UPDATE applications SET agency_recommended = NOT agency_recommended WHERE id = ?";
-        return $this->db->update($sql, [$id]);
+        $result = $this->db->update($sql, [$id]);
+        
+        // Log toggle
+        $new_state = !$was_recommended;
+        $action = $new_state ? 'application_recommended' : 'application_unrecommended';
+        $status_text = $new_state ? 'marked as recommended' : 'removed from recommendations';
+        
+        logActivity($this->db, $action, 
+            "Application #{$id} {$status_text} by agency (toggled). " .
+            "Job: '{$application['job_title']}', Talent: '{$application['talent_name']}'");
+
+        return $result;
     }
 
     /**
@@ -396,18 +493,67 @@ class Application {
         $app = $this->getById($id);
 
         if (!$app) {
+            logActivity($this->db, 'application_withdraw_failed', 
+                "Attempted to withdraw non-existent application #{$id}");
             throw new Exception('Application not found');
         }
 
         // If talent_id provided, verify ownership
         if ($talent_id !== null && $app['talent_id'] != $talent_id) {
+            logActivity($this->db, 'application_withdraw_unauthorized', 
+                "Talent #{$talent_id} attempted to withdraw application #{$id} belonging to Talent #{$app['talent_id']}");
             throw new Exception('Access denied.');
         }
 
         if (!in_array($app['status'], [APP_STATUS_PENDING, APP_STATUS_REVIEWED])) {
+            logActivity($this->db, 'application_withdraw_blocked', 
+                "Talent #{$talent_id} attempted to withdraw application #{$id} with status '{$app['status']}'");
             throw new Exception('Cannot withdraw this application');
         }
 
-        return $this->delete($id);
+        $result = $this->delete($id);
+        
+        // Log withdrawal (delete already logs, but adding specific withdraw log)
+        logActivity($this->db, 'application_withdrawn', 
+            "Application #{$id} withdrawn by " . ($talent_id ? "Talent #{$talent_id}" : "system") . ". " .
+            "Job: '{$app['job_title']}', Status: '{$app['status']}'");
+
+        return $result;
+    }
+    
+    public function getByJobWithTalent($job_id) {
+        return $this->db->fetchAll(
+            "SELECT a.*, t.full_name, t.profile_photo_url
+             FROM applications a JOIN talents t ON a.talent_id=t.id
+             WHERE a.job_id=? ORDER BY a.applied_at DESC",
+            [$job_id]
+        );
+    }
+
+    public function getRecentRecommended($limit = 20) {
+        return $this->db->fetchAll(
+            "SELECT a.id, a.status, a.applied_at, a.proposed_rate,
+                    t.full_name AS talent_name, t.profile_photo_url,
+                    j.title AS job_title, e.company_name
+             FROM applications a
+             JOIN talents t ON a.talent_id=t.id
+             JOIN jobs j ON a.job_id=j.id
+             JOIN employers e ON j.employer_id=e.id
+             WHERE a.agency_recommended=1
+             ORDER BY a.applied_at DESC LIMIT ?",
+            [$limit]
+        );
+    }
+
+    public function getRecentByTalent($talent_id, $limit = 10) {
+        return $this->db->fetchAll(
+            "SELECT a.*, j.title AS job_title, j.job_type, e.company_name
+             FROM applications a
+             JOIN jobs j ON j.id = a.job_id
+             JOIN employers e ON e.id = j.employer_id
+             WHERE a.talent_id = ?
+             ORDER BY a.applied_at DESC LIMIT ?",
+            [$talent_id, $limit]
+        );
     }
 }

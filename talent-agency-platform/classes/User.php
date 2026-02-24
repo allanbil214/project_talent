@@ -245,4 +245,38 @@ class User {
         $sql = "DELETE FROM password_resets WHERE email = ?";
         return $this->db->delete($sql, [$email]);
     }
+
+    public function updateRole($id, $role) {
+        return $this->db->update(
+            "UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?",
+            [$role, $id]
+        );
+    }
+
+    public function getStaff($page = 1, $per_page = 20, $filters = []) {
+        $offset = ($page - 1) * $per_page;
+        $where  = ["u.role IN ('staff', 'super_admin')"];
+        $params = [];
+    
+        if (!empty($filters['search'])) { $where[] = "u.email LIKE ?"; $params[] = '%' . $filters['search'] . '%'; }
+        if (!empty($filters['role']))   { $where[] = "u.role = ?";     $params[] = $filters['role']; }
+    
+        $where_sql = 'WHERE ' . implode(' AND ', $where);
+        $total = $this->db->fetchColumn("SELECT COUNT(*) FROM users u $where_sql", $params);
+        $data  = $this->db->fetchAll(
+            "SELECT u.id, u.email, u.role, u.status, u.created_at, u.updated_at
+             FROM users u $where_sql ORDER BY u.role ASC, u.created_at DESC LIMIT ? OFFSET ?",
+            array_merge($params, [$per_page, $offset])
+        );
+        return ['data' => $data, 'pagination' => getPagination($total, $page, $per_page)];
+    }
+
+    public function getStaffStats() {
+        return [
+            'total'     => $this->db->fetchColumn("SELECT COUNT(*) FROM users WHERE role IN ('staff','super_admin')"),
+            'admins'    => $this->db->fetchColumn("SELECT COUNT(*) FROM users WHERE role = 'super_admin'"),
+            'staff'     => $this->db->fetchColumn("SELECT COUNT(*) FROM users WHERE role = 'staff'"),
+            'suspended' => $this->db->fetchColumn("SELECT COUNT(*) FROM users WHERE role IN ('staff','super_admin') AND status = 'suspended'"),
+        ];
+    }
 }

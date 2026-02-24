@@ -29,6 +29,7 @@ define('JOB_STATUS_PENDING', 'pending_approval');
 define('JOB_STATUS_ACTIVE', 'active');
 define('JOB_STATUS_FILLED', 'filled');
 define('JOB_STATUS_CLOSED', 'closed');
+define('JOB_STATUS_DELETED', 'deleted');
 
 // Application statuses
 define('APP_STATUS_PENDING', 'pending');

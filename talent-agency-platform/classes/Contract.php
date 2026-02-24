@@ -1,6 +1,8 @@
 <?php
 // classes/Contract.php
 
+require_once __DIR__ . '/../includes/functions.php'; // Add this at the top
+
 class Contract {
     private $db;
 
@@ -16,6 +18,8 @@ class Contract {
         $required = ['job_id', 'talent_id', 'employer_id', 'start_date', 'rate', 'rate_type'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
+                logActivity($this->db, 'contract_creation_failed', 
+                    "Contract creation failed - missing required field: {$field}");
                 throw new Exception("Missing required field: $field");
             }
         }
@@ -26,8 +30,15 @@ class Contract {
             [$data['job_id'], $data['talent_id']]
         );
         if ($existing) {
+            logActivity($this->db, 'contract_creation_failed', 
+                "Contract creation failed - active contract already exists for Job #{$data['job_id']} and Talent #{$data['talent_id']}");
             throw new Exception('An active contract already exists for this talent and job.');
         }
+
+        // Get job and talent info for logging
+        $job = $this->db->fetchOne("SELECT title FROM jobs WHERE id = ?", [$data['job_id']]);
+        $talent = $this->db->fetchOne("SELECT full_name FROM talents WHERE id = ?", [$data['talent_id']]);
+        $employer = $this->db->fetchOne("SELECT company_name FROM employers WHERE id = ?", [$data['employer_id']]);
 
         $commission = $data['agency_commission_percentage'] ?? DEFAULT_COMMISSION_PERCENTAGE;
         $commission_amount = null;
@@ -69,9 +80,143 @@ class Contract {
                 "UPDATE applications SET status = 'accepted', reviewed_at = NOW() WHERE id = ?",
                 [$data['application_id']]
             );
+            
+            // Log application acceptance
+            logActivity($this->db, 'application_accepted', 
+                "Application #{$data['application_id']} accepted via contract creation. Contract #{$id}");
         }
 
+        // Log contract creation
+        logActivity($this->db, 'contract_created', 
+            "Contract #{$id} created. Job: '{$job['title']}' (ID: {$data['job_id']}), " .
+            "Talent: '{$talent['full_name']}' (ID: {$data['talent_id']}), " .
+            "Employer: '{$employer['company_name']}' (ID: {$data['employer_id']}), " .
+            "Rate: {$data['rate']}/{$data['rate_type']}, " .
+            "Total Amount: " . ($data['total_amount'] ?? 'N/A'));
+
         return $id;
+    }
+
+    /**
+     * Update contract status
+     */
+    public function updateStatus($id, $status, $actor_id = null, $actor_role = null) {
+        $allowed = [CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_COMPLETED, CONTRACT_STATUS_TERMINATED];
+        if (!in_array($status, $allowed)) {
+            logActivity($this->db, 'contract_status_update_failed', 
+                "Contract #{$id} - invalid status attempted: {$status}");
+            throw new Exception('Invalid contract status.');
+        }
+
+        $contract = $this->getById($id);
+        if (!$contract) {
+            logActivity($this->db, 'contract_status_update_failed', 
+                "Attempted to update status of non-existent contract #{$id}");
+            throw new Exception('Contract not found.');
+        }
+
+        $old_status = $contract['status'];
+
+        // Access check
+        if ($actor_id !== null && $actor_role !== null) {
+            if ($actor_role === ROLE_EMPLOYER && $contract['employer_id'] != $actor_id) {
+                logActivity($this->db, 'contract_status_update_unauthorized', 
+                    "Employer #{$actor_id} attempted to update contract #{$id} belonging to Employer #{$contract['employer_id']}");
+                throw new Exception('Access denied.');
+            }
+            if ($actor_role === ROLE_TALENT && $contract['talent_id'] != $actor_id) {
+                logActivity($this->db, 'contract_status_update_unauthorized', 
+                    "Talent #{$actor_id} attempted to update contract #{$id} belonging to Talent #{$contract['talent_id']}");
+                throw new Exception('Access denied.');
+            }
+        }
+
+        $this->db->update(
+            "UPDATE contracts SET status = ?, updated_at = NOW() WHERE id = ?",
+            [$status, $id]
+        );
+
+        // If completed, increment talent's total_jobs_completed
+        if ($status === CONTRACT_STATUS_COMPLETED) {
+            $this->db->update(
+                "UPDATE talents SET total_jobs_completed = total_jobs_completed + 1 WHERE id = ?",
+                [$contract['talent_id']]
+            );
+            
+            logActivity($this->db, 'contract_completed', 
+                "Contract #{$id} completed. Talent #{$contract['talent_id']}'s job count incremented.");
+        }
+
+        if ($status === CONTRACT_STATUS_TERMINATED) {
+            logActivity($this->db, 'contract_terminated', 
+                "Contract #{$id} terminated. Job: '{$contract['job_title']}', " .
+                "Talent: '{$contract['talent_name']}', Employer: '{$contract['company_name']}'");
+        }
+
+        // Log status change
+        logActivity($this->db, 'contract_status_changed', 
+            "Contract #{$id} status changed from '{$old_status}' to '{$status}' by " .
+            ($actor_role ? "{$actor_role} #{$actor_id}" : "system") . ". " .
+            "Job: '{$contract['job_title']}', Talent: '{$contract['talent_name']}'");
+
+        return true;
+    }
+
+    /**
+     * Update contract details (employer only, active contracts)
+     */
+    public function update($id, $employer_id, $data) {
+        $contract = $this->db->fetchOne(
+            "SELECT * FROM contracts WHERE id = ? AND employer_id = ? AND status = 'active'",
+            [$id, $employer_id]
+        );
+        if (!$contract) {
+            logActivity($this->db, 'contract_update_failed', 
+                "Contract #{$id} update failed - not found, not active, or not owned by Employer #{$employer_id}");
+            throw new Exception('Contract not found or cannot be edited.');
+        }
+
+        $allowed = ['end_date', 'total_amount', 'contract_document_url'];
+        $set = [];
+        $params = [];
+        $changes = [];
+
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $data)) {
+                $set[] = "$field = ?";
+                $params[] = $data[$field];
+                
+                // Track changes
+                if ($contract[$field] != $data[$field]) {
+                    $old_value = $contract[$field];
+                    $changes[] = "{$field}: '{$old_value}' → '{$data[$field]}'";
+                }
+            }
+        }
+
+        if (empty($set)) return false;
+
+        // Recalculate commission if total_amount changed
+        if (isset($data['total_amount']) && $data['total_amount'] !== null) {
+            $commission_amount = round($data['total_amount'] * ($contract['agency_commission_percentage'] / 100), 2);
+            $set[] = 'agency_commission_amount = ?';
+            $params[] = $commission_amount;
+            $changes[] = "commission_amount: '{$contract['agency_commission_amount']}' → '{$commission_amount}'";
+        }
+
+        $set[] = 'updated_at = NOW()';
+        $params[] = $id;
+
+        $sql = "UPDATE contracts SET " . implode(', ', $set) . " WHERE id = ?";
+        $result = $this->db->update($sql, $params);
+        
+        // Log updates if something changed
+        if ($result && !empty($changes)) {
+            logActivity($this->db, 'contract_updated', 
+                "Contract #{$id} updated by Employer #{$employer_id}. Changes: " . implode(', ', $changes));
+        }
+
+        return $result;
     }
 
     /**
@@ -157,85 +302,6 @@ class Contract {
     }
 
     /**
-     * Update contract status
-     */
-    public function updateStatus($id, $status, $actor_id = null, $actor_role = null) {
-        $allowed = [CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_COMPLETED, CONTRACT_STATUS_TERMINATED];
-        if (!in_array($status, $allowed)) {
-            throw new Exception('Invalid contract status.');
-        }
-
-        $contract = $this->getById($id);
-        if (!$contract) {
-            throw new Exception('Contract not found.');
-        }
-
-        // Access check
-        if ($actor_id !== null && $actor_role !== null) {
-            if ($actor_role === ROLE_EMPLOYER && $contract['employer_id'] != $actor_id) {
-                throw new Exception('Access denied.');
-            }
-            if ($actor_role === ROLE_TALENT && $contract['talent_id'] != $actor_id) {
-                throw new Exception('Access denied.');
-            }
-        }
-
-        $this->db->update(
-            "UPDATE contracts SET status = ?, updated_at = NOW() WHERE id = ?",
-            [$status, $id]
-        );
-
-        // If completed, increment talent's total_jobs_completed
-        if ($status === CONTRACT_STATUS_COMPLETED) {
-            $this->db->update(
-                "UPDATE talents SET total_jobs_completed = total_jobs_completed + 1 WHERE id = ?",
-                [$contract['talent_id']]
-            );
-        }
-
-        return true;
-    }
-
-    /**
-     * Update contract details (employer only, active contracts)
-     */
-    public function update($id, $employer_id, $data) {
-        $contract = $this->db->fetchOne(
-            "SELECT * FROM contracts WHERE id = ? AND employer_id = ? AND status = 'active'",
-            [$id, $employer_id]
-        );
-        if (!$contract) {
-            throw new Exception('Contract not found or cannot be edited.');
-        }
-
-        $allowed = ['end_date', 'total_amount', 'contract_document_url'];
-        $set = [];
-        $params = [];
-
-        foreach ($allowed as $field) {
-            if (array_key_exists($field, $data)) {
-                $set[] = "$field = ?";
-                $params[] = $data[$field];
-            }
-        }
-
-        if (empty($set)) return false;
-
-        // Recalculate commission if total_amount changed
-        if (isset($data['total_amount']) && $data['total_amount'] !== null) {
-            $commission_amount = round($data['total_amount'] * ($contract['agency_commission_percentage'] / 100), 2);
-            $set[] = 'agency_commission_amount = ?';
-            $params[] = $commission_amount;
-        }
-
-        $set[] = 'updated_at = NOW()';
-        $params[] = $id;
-
-        $sql = "UPDATE contracts SET " . implode(', ', $set) . " WHERE id = ?";
-        return $this->db->update($sql, $params);
-    }
-
-    /**
      * Get summary stats
      */
     public function getStats($scope = 'all', $scope_id = null) {
@@ -265,5 +331,42 @@ class Contract {
             'total_value'      => $total_value,
             'total_commission' => $total_commission,
         ];
+    }
+
+    public function getActiveForPayment() {
+        return $this->db->fetchAll(
+            "SELECT c.id, j.title AS job_title, t.full_name AS talent_name, e.company_name, c.agency_commission_percentage
+             FROM contracts c JOIN jobs j ON c.job_id=j.id JOIN talents t ON c.talent_id=t.id JOIN employers e ON c.employer_id=e.id
+             WHERE c.status='active' ORDER BY c.created_at DESC"
+        );
+    }
+
+    public function getRecentByTalent($talent_id, $limit = 5) {
+        return $this->db->fetchAll(
+            "SELECT c.*, j.title AS job_title, e.company_name
+             FROM contracts c
+             JOIN jobs j ON j.id = c.job_id
+             JOIN employers e ON e.id = c.employer_id
+             WHERE c.talent_id = ?
+             ORDER BY c.created_at DESC LIMIT ?",
+            [$talent_id, $limit]
+        );
+    }
+
+    // Optional: Add a method to delete/terminate contracts with logging
+    public function terminate($id, $reason = null, $actor_id = null, $actor_role = null) {
+        $contract = $this->getById($id);
+        if (!$contract) {
+            throw new Exception('Contract not found');
+        }
+
+        // Log termination with reason
+        $result = $this->updateStatus($id, CONTRACT_STATUS_TERMINATED, $actor_id, $actor_role);
+        
+        logActivity($this->db, 'contract_terminated_with_reason', 
+            "Contract #{$id} terminated. Reason: " . ($reason ?? 'Not specified') . ". " .
+            "Job: '{$contract['job_title']}', Talent: '{$contract['talent_name']}'");
+        
+        return $result;
     }
 }

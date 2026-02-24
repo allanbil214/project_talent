@@ -444,4 +444,43 @@ class Talent {
         $sql = "UPDATE talents SET preferred_work_type = ?, updated_at = NOW() WHERE id = ?";
         return $this->db->update($sql, [$preferences, $talent_id]);
     }
+
+    public function getSuggestedForJob($job_id, $skill_ids = []) {
+        if (!empty($skill_ids)) {
+            $placeholders = implode(',', array_fill(0, count($skill_ids), '?'));
+            return $this->db->fetchAll(
+                "SELECT t.id, t.full_name, t.profile_photo_url, t.city, t.hourly_rate, t.currency,
+                        t.availability_status, t.years_experience, t.rating_average, t.verified,
+                        COUNT(DISTINCT ts.skill_id) AS matching_skills, u.status AS user_status
+                 FROM talents t
+                 JOIN users u ON t.user_id = u.id
+                 LEFT JOIN talent_skills ts ON ts.talent_id = t.id AND ts.skill_id IN ($placeholders)
+                 WHERE u.status = 'active'
+                   AND t.id NOT IN (SELECT talent_id FROM applications WHERE job_id = ?)
+                 GROUP BY t.id
+                 ORDER BY matching_skills DESC, t.verified DESC, t.rating_average DESC
+                 LIMIT 30",
+                array_merge($skill_ids, [$job_id])
+            );
+        }
+    
+        return $this->db->fetchAll(
+            "SELECT t.id, t.full_name, t.profile_photo_url, t.city, t.hourly_rate, t.currency,
+                    t.availability_status, t.years_experience, t.rating_average, t.verified,
+                    0 AS matching_skills, u.status AS user_status
+             FROM talents t JOIN users u ON t.user_id=u.id
+             WHERE u.status='active' AND t.id NOT IN (SELECT talent_id FROM applications WHERE job_id=?)
+             ORDER BY t.verified DESC, t.rating_average DESC LIMIT 30",
+            [$job_id]
+        );
+    }
+
+    public function getAdminStats() {
+        return [
+            'total'     => $this->db->fetchColumn("SELECT COUNT(*) FROM talents"),
+            'verified'  => $this->db->fetchColumn("SELECT COUNT(*) FROM talents WHERE verified = 1"),
+            'available' => $this->db->fetchColumn("SELECT COUNT(*) FROM talents WHERE availability_status = 'available'"),
+            'suspended' => $this->db->fetchColumn("SELECT COUNT(*) FROM users WHERE role = 'talent' AND status = 'suspended'"),
+        ];
+    }
 }

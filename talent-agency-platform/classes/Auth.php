@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/User.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 class Auth {
     private $db;
@@ -21,21 +22,30 @@ class Auth {
         $user = $this->user->getByEmail($email);
         
         if (!$user) {
+            // Log failed login attempt (no user found)
+            logActivity($this->db, 'login_failed', "Failed login attempt - email not found: {$email}");
             throw new Exception('Invalid email or password');
         }
         
         // Verify password
         if (!password_verify($password, $user['password_hash'])) {
+            // Log failed login attempt (wrong password)
+            logActivity($this->db, 'login_failed', "Failed login attempt - wrong password for: {$email}");
             throw new Exception('Invalid email or password');
         }
         
         // Check if user is active
         if ($user['status'] !== STATUS_ACTIVE) {
+            // Log blocked login attempt (inactive account)
+            logActivity($this->db, 'login_blocked', "Login attempt on inactive account: {$email} (ID: {$user['id']})");
             throw new Exception('Your account has been suspended. Please contact support.');
         }
         
         // Create session
         $this->createSession($user);
+        
+        // Log successful login - FIXED: removed $db and added proper role
+        logActivity($this->db, 'login', "User logged in successfully. User ID: {$user['id']}, Role: {$user['role']}, Email: {$email}");
         
         return $user;
     }
@@ -51,12 +61,16 @@ class Auth {
         
         // Check if email already exists
         if ($this->user->emailExists($data['email'])) {
+            // Log registration attempt with existing email
+            logActivity($this->db, 'registration_failed', "Registration failed - email already exists: {$data['email']}");
             throw new Exception('Email already registered');
         }
         
         // Validate role
         $allowed_roles = [ROLE_TALENT, ROLE_EMPLOYER];
         if (!in_array($data['role'], $allowed_roles)) {
+            // Log invalid role attempt
+            logActivity($this->db, 'registration_failed', "Registration failed - invalid role: {$data['role']} for email: {$data['email']}");
             throw new Exception('Invalid role');
         }
         
@@ -80,6 +94,9 @@ class Auth {
             
             $this->db->commit();
             
+            // Log successful registration
+            logActivity($this->db, 'user_registered', "New user registered. User ID: {$user_id}, Role: {$data['role']}, Email: {$data['email']}");
+            
             // Get complete user data
             $user = $this->user->getById($user_id);
             
@@ -87,74 +104,21 @@ class Auth {
             
         } catch (Exception $e) {
             $this->db->rollback();
+            // Log registration error
+            logActivity($this->db, 'registration_error', "Registration error for {$data['email']}: " . $e->getMessage());
             throw $e;
         }
-    }
-    
-    /**
-     * Create talent profile
-     */
-    private function createTalentProfile($user_id, $data) {
-        $sql = "INSERT INTO talents (user_id, full_name, created_at, updated_at) 
-                VALUES (?, ?, NOW(), NOW())";
-        
-        $full_name = $data['full_name'] ?? 'User';
-        
-        return $this->db->insert($sql, [$user_id, $full_name]);
-    }
-    
-    /**
-     * Create employer profile
-     */
-    private function createEmployerProfile($user_id, $data) {
-        $sql = "INSERT INTO employers (user_id, company_name, created_at, updated_at) 
-                VALUES (?, ?, NOW(), NOW())";
-        
-        $company_name = $data['company_name'] ?? 'Company';
-        
-        return $this->db->insert($sql, [$user_id, $company_name]);
-    }
-    
-    /**
-     * Create session
-     */
-    private function createSession($user) {
-        // Regenerate session ID for security
-        session_regenerate_id(true);
-        
-        // Set session variables
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['email'] = $user['email'];
-        $_SESSION['role'] = $user['role'];
-        $_SESSION['last_activity'] = time();
-        
-        // Get profile name
-        $profile_name = $this->getProfileName($user['id'], $user['role']);
-        if ($profile_name) {
-            $_SESSION['name'] = $profile_name;
-        }
-    }
-    
-    /**
-     * Get profile name based on role
-     */
-    private function getProfileName($user_id, $role) {
-        if ($role === ROLE_TALENT) {
-            $sql = "SELECT full_name FROM talents WHERE user_id = ?";
-            $profile = $this->db->fetchOne($sql, [$user_id]);
-            return $profile['full_name'] ?? null;
-        } elseif ($role === ROLE_EMPLOYER) {
-            $sql = "SELECT company_name FROM employers WHERE user_id = ?";
-            $profile = $this->db->fetchOne($sql, [$user_id]);
-            return $profile['company_name'] ?? null;
-        }
-        return null;
     }
     
     /**
      * Logout user
      */
     public function logout() {
+        // Log logout before destroying session
+        if (isset($_SESSION['user_id'])) {
+            logActivity($this->db, 'logout', "User logged out. User ID: {$_SESSION['user_id']}, Role: {$_SESSION['role']}");
+        }
+        
         // Unset all session variables
         $_SESSION = [];
         
@@ -168,42 +132,22 @@ class Auth {
     }
     
     /**
-     * Check if user is logged in
-     */
-    public function isLoggedIn() {
-        return isset($_SESSION['user_id']);
-    }
-    
-    /**
-     * Get current user ID
-     */
-    public function getCurrentUserId() {
-        return $_SESSION['user_id'] ?? null;
-    }
-    
-    /**
-     * Get current user
-     */
-    public function getCurrentUser() {
-        $user_id = $this->getCurrentUserId();
-        if (!$user_id) {
-            return null;
-        }
-        return $this->user->getUserWithProfile($user_id);
-    }
-    
-    /**
      * Request password reset
      */
     public function requestPasswordReset($email) {
         // Check if user exists
         $user = $this->user->getByEmail($email);
         if (!$user) {
+            // Log password reset attempt for non-existent email
+            logActivity($this->db, 'password_reset_failed', "Password reset requested for non-existent email: {$email}");
             throw new Exception('Email not found');
         }
         
         // Generate reset token
         $token = $this->user->createPasswordResetToken($email);
+        
+        // Log password reset request
+        logActivity($this->db, 'password_reset_requested', "Password reset requested for User ID: {$user['id']}, Email: {$email}");
         
         return [
             'email' => $email,
@@ -218,6 +162,8 @@ class Auth {
         // Verify token
         $reset_request = $this->user->verifyPasswordResetToken($email, $token);
         if (!$reset_request) {
+            // Log invalid token attempt
+            logActivity($this->db, 'password_reset_failed', "Invalid or expired reset token used for email: {$email}");
             throw new Exception('Invalid or expired reset token');
         }
         
@@ -232,6 +178,9 @@ class Auth {
         
         // Delete reset token
         $this->user->deletePasswordResetToken($email);
+        
+        // Log successful password reset
+        logActivity($this->db, 'password_reset_completed', "Password reset completed for User ID: {$user['id']}, Email: {$email}");
         
         return true;
     }
@@ -248,16 +197,82 @@ class Auth {
         
         // Verify current password
         if (!password_verify($current_password, $user['password_hash'])) {
+            // Log incorrect current password attempt
+            logActivity($this->db, 'password_change_failed', "Failed password change attempt - incorrect current password for User ID: {$user_id}");
             throw new Exception('Current password is incorrect');
         }
         
         // Update password
-        return $this->user->updatePassword($user_id, $new_password);
+        $result = $this->user->updatePassword($user_id, $new_password);
+        
+        // Log successful password change
+        logActivity($this->db, 'password_changed', "Password changed successfully for User ID: {$user_id}");
+        
+        return $result;
     }
     
-    /**
-     * Check if user has permission
-     */
+    // Rest of your methods remain the same...
+    private function createTalentProfile($user_id, $data) {
+        $sql = "INSERT INTO talents (user_id, full_name, created_at, updated_at) 
+                VALUES (?, ?, NOW(), NOW())";
+        
+        $full_name = $data['full_name'] ?? 'User';
+        
+        return $this->db->insert($sql, [$user_id, $full_name]);
+    }
+    
+    private function createEmployerProfile($user_id, $data) {
+        $sql = "INSERT INTO employers (user_id, company_name, created_at, updated_at) 
+                VALUES (?, ?, NOW(), NOW())";
+        
+        $company_name = $data['company_name'] ?? 'Company';
+        
+        return $this->db->insert($sql, [$user_id, $company_name]);
+    }
+    
+    private function createSession($user) {
+        session_regenerate_id(true);
+        
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['role'] = $user['role'];
+        $_SESSION['last_activity'] = time();
+        
+        $profile_name = $this->getProfileName($user['id'], $user['role']);
+        if ($profile_name) {
+            $_SESSION['name'] = $profile_name;
+        }
+    }
+    
+    private function getProfileName($user_id, $role) {
+        if ($role === ROLE_TALENT) {
+            $sql = "SELECT full_name FROM talents WHERE user_id = ?";
+            $profile = $this->db->fetchOne($sql, [$user_id]);
+            return $profile['full_name'] ?? null;
+        } elseif ($role === ROLE_EMPLOYER) {
+            $sql = "SELECT company_name FROM employers WHERE user_id = ?";
+            $profile = $this->db->fetchOne($sql, [$user_id]);
+            return $profile['company_name'] ?? null;
+        }
+        return null;
+    }
+    
+    public function isLoggedIn() {
+        return isset($_SESSION['user_id']);
+    }
+    
+    public function getCurrentUserId() {
+        return $_SESSION['user_id'] ?? null;
+    }
+    
+    public function getCurrentUser() {
+        $user_id = $this->getCurrentUserId();
+        if (!$user_id) {
+            return null;
+        }
+        return $this->user->getUserWithProfile($user_id);
+    }
+    
     public function hasRole($required_roles) {
         if (!$this->isLoggedIn()) {
             return false;
@@ -270,9 +285,6 @@ class Auth {
         return in_array($_SESSION['role'], $required_roles);
     }
     
-    /**
-     * Get redirect URL based on role
-     */
     public function getRedirectUrl($role) {
         $urls = [
             ROLE_SUPER_ADMIN => '/public/admin/dashboard.php',

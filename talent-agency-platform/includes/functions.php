@@ -35,6 +35,24 @@ function formatDateTime($datetime, $format = 'd M Y H:i') {
     return date($format, strtotime($datetime));
 }
 
+function logActivity($db, $action, $description = null) {
+    try {
+        $db->insert(
+            "INSERT INTO activity_logs (user_id, action, description, ip_address, user_agent, created_at)
+             VALUES (?, ?, ?, ?, ?, NOW())",
+            [
+                $_SESSION['user_id'] ?? null,
+                $action,
+                $description,
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]
+        );
+    } catch (Exception $e) {
+        // Fail silently — logging should never break the app
+    }
+}
+
 /**
  * Time ago
  */

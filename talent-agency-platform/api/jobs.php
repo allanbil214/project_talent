@@ -67,7 +67,7 @@ try {
                 jsonResponse(['success' => false, 'message' => 'Job not found'], 404);
             }
 
-            jsonResponse(['success' => true, 'data' => $job]);
+            jsonResponse(['success' => true, 'job' => $job]);
             break;
 
         // ----------------------------------------------------------------

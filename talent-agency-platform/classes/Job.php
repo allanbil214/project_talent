@@ -243,7 +243,7 @@ class Job {
      * Delete job (soft delete - close it)
      */
     public function delete($id) {
-        $sql = "UPDATE jobs SET status = 'closed', updated_at = NOW() WHERE id = ?";
+        $sql = "UPDATE jobs SET status = 'deleted', updated_at = NOW() WHERE id = ?";
         return $this->db->update($sql, [$id]);
     }
     
@@ -622,7 +622,28 @@ class Job {
             JOB_STATUS_FILLED,
             JOB_STATUS_EXPIRED,
             JOB_STATUS_CLOSED,
-            JOB_STATUS_REJECTED
+            JOB_STATUS_REJECTED,
+            JOB_STATUS_DELETED
         ];
+    }
+
+    public function getAdminStats() {
+        return [
+            'total'   => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs"),
+            'pending' => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs WHERE status = 'pending_approval'"),
+            'active'  => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs WHERE status = 'active'"),
+            'filled'  => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs WHERE status = 'filled'"),
+            'closed'  => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs WHERE status = 'closed'"),
+            'deleted' => $this->db->fetchColumn("SELECT COUNT(*) FROM jobs WHERE status = 'deleted'")
+        ];
+    }    
+
+    public function getActiveForMatching() {
+        return $this->db->fetchAll(
+            "SELECT j.id, j.title, j.job_type, j.location_type, e.company_name,
+                    (SELECT COUNT(*) FROM applications WHERE job_id=j.id) AS app_count
+             FROM jobs j JOIN employers e ON j.employer_id=e.id
+             WHERE j.status='active' ORDER BY j.created_at DESC"
+        );
     }
 }

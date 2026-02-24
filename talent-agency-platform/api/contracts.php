@@ -80,7 +80,7 @@ try {
                         if ($contract['talent_id'] != $actor_id) throw new Exception('Forbidden');
                     }
 
-                    echo json_encode(['success' => true, 'data' => $contract]);
+                    echo json_encode(['success' => true, 'contract' => $contract]);
                     break;
 
                 default:
